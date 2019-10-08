@@ -1,4 +1,4 @@
-# Date: 2019-10-6
+# Date: 2019-10-7
 # Author: Secret City Wildbots
 # Description: allows the user to load an image of the field and generate a 
 #              planned path for the robot to follow
@@ -13,7 +13,7 @@ import tkinter as tk # file UI
 root = tk.Tk() # suppress the default window
 root.withdraw() # suppress the default window
 from tkinter import filedialog # file UI
-#from tkinter import messagebox # file UI
+import xlwt # Excel write functionality
 
 # Change Environment settings (some are only applicable if running in an iPython console)
 try:
@@ -190,6 +190,85 @@ def safePtSelection(h_fig,ax,mkrType,mkrSize):
                 else: hs_scat[i] = h
             
     return ptxs, ptys, vels, oris
+
+#------------------------------------------------------------------------------
+
+def openWorkbook(sheetNames,sheetHeaders):
+    """ Opens a workbook on the hardisk 
+    Args:
+        sheetNames: 1D list of names for each sheet in the workbook
+        sheetHeaders: 2D list of horizontal headers in each sheet
+    Returns:
+        book: workbook object
+        sheets: list of sheet objects
+    Saves:
+        None
+    """
+    
+    # Initialize the workbook
+    numSheets = len(sheetNames)
+    book = xlwt.Workbook()
+    sheets = []
+    for i in range(0,numSheets,1):
+        sheets.append(book.add_sheet(sheetNames[i]))
+    
+    # Place the headers
+    for i in range(0,numSheets,1):
+        for j in range(0,len(sheetHeaders[i]),1):
+            sheets[i].write(0,j,sheetHeaders[i][j].replace('_',' ').replace('@',''))
+    
+    return book, sheets
+
+#------------------------------------------------------------------------------
+
+def saveToWorkbook(book,sheets,data):
+    """ Saves data into an already-opened workbook
+    Args:
+        book: workbook object
+        sheets: list of sheet objects
+        data: list of numpy data arrays [sheet][column][rows (vector of data)]
+    Returns:
+        flag_writeok: is returned as True if the data write was successfull
+    Saves:
+        None
+    """
+    
+    try: 
+        for i in range(0,len(sheets),1):
+            # Each sheet
+            for j in range(0,len(data[i]),1):
+                # Each column
+                for k in range(0,len(data[i][j]),1):
+                    # Each row (writable datum)
+                    try: d = data[i][j][k].astype(float)
+                    except: d = data[i][j][k]
+                    sheets[i].write(k+1,j,d)
+        flag_writeok = True
+    except:
+        flag_writeok = False
+
+    return flag_writeok
+
+#------------------------------------------------------------------------------
+    
+def saveWorkbook(book,filepath):
+    """ Saves a workbook to the hardisk
+    Args:
+        book: workbook object
+        filepath: full file path (including file name) to save the workbook
+    Returns:
+        flag_saveok: is returned as True if the save operation was successfull
+    Saves:
+        None
+    """
+    
+    try:
+        book.save(filepath+'.xls')
+        flag_saveok = True
+    except:
+        flag_saveok = False
+        
+    return flag_saveok
 
 #------------------------------------------------------------------------------
 
@@ -491,6 +570,8 @@ oris_smooth.append(oris_way[-1])
 
 #------------------------------------------------------------------------------
 
+#*** Orientations are not working perfectly
+
 # Calculate the distance and time, and orientation along the path
 dsts_smooth = [] # initialize
 tims_smooth = [] # initialize
@@ -575,16 +656,6 @@ plt.ylabel('Width (ft)')
 h_im = plt.imshow(I_color,extent=[0,I.shape[1],I.shape[0],0])
 plt.draw()
 
-# Display the waypoints
-for i in range(0,len(ptxs_way),1):
-    ax.scatter(ptxs_way[i]*scale_pi,fieldy_pixels-(ptys_way[i]*scale_pi),facecolors='none', edgecolors='r',marker='o',s=100)
-
-# Display the path
-for i in range(0,len(ptxs_smooth),1):
-    ptColor = plt.cm.plasma(vels_smooth[i]/(12*maxVel))
-    ptColor = np.array([ptColor[0],ptColor[1],ptColor[2]])
-    ax.scatter(ptxs_smooth[i]*scale_pi,fieldy_pixels-(ptys_smooth[i]*scale_pi),color=ptColor,marker='.',s=50)
-    
 # Display the oriendations along the path
 for i in range(0,len(ptxs_smooth),1):
     xa = ptxs_smooth[i]*scale_pi
@@ -594,8 +665,24 @@ for i in range(0,len(ptxs_smooth),1):
     yb = ya - (delta_s*scale_pi)*np.sin(oa)
     plt.plot(np.array([xa,xb]),np.array([ya,yb]),color='k')
 
+# Display the path
+for i in range(0,len(ptxs_smooth),1):
+    ptColor = plt.cm.plasma(vels_smooth[i]/(12*maxVel))
+    ptColor = np.array([ptColor[0],ptColor[1],ptColor[2]])
+    ax.scatter(ptxs_smooth[i]*scale_pi,fieldy_pixels-(ptys_smooth[i]*scale_pi),color=ptColor,marker='.',s=100)
+    
+# Display the waypoints
+for i in range(0,len(ptxs_way),1):
+    ax.scatter(ptxs_way[i]*scale_pi,fieldy_pixels-(ptys_way[i]*scale_pi),facecolors='none', edgecolors='r',marker='o',s=200)
+
 #------------------------------------------------------------------------------
 
-#*** Save the generated path
+# Save the generated path
+plt.pause(1.0)
+path_save = filedialog.asksaveasfilename(title='Save Path File',filetypes=[('Spreadsheet','*.xls')])
+[book,sheets] = openWorkbook(['Smooth Path','Waypoints'],[['Distance (in)','Time (s)','X (in)','Y (in)','Velocity (in/s)','Orientation (deg)'],['X (in)','Y (in)','Velocity (in/s)','Orientation (deg)']])
+data = [[np.array(dsts_smooth),np.array(tims_smooth),np.array(ptxs_smooth),np.array(ptys_smooth),np.array(vels_smooth),np.array(oris_smooth)],[np.array(ptxs_way),np.array(ptys_way),np.array(vels_way),np.array(oris_way)]]
+saveToWorkbook(book,sheets,data)
+saveWorkbook(book,path_save)
     
 #------------------------------------------------------------------------------
