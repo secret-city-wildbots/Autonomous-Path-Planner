@@ -281,6 +281,7 @@ ptys_smooth = []
 vels_smooth = []
 aNum_start = 0 # start point for the current segment
 slope = ""
+circleNum = -1
 
 for segNum in range(0,(len(ptxs_segs)-1),1):
     
@@ -306,7 +307,8 @@ for segNum in range(0,(len(ptxs_segs)-1),1):
             slope = "negative"
         if m == 0:
             slope = "0"
-    for point in range(0, len(ptxs_segs[segNum]) - 1, 1):
+    for point in range(aNum_start, len(ptxs_segs[segNum]) - 1, 1):
+       
         
         if slope == "positive":
             circle1_x = ptxs_segs[segNum][point] + delta_x_circle
@@ -340,30 +342,59 @@ for segNum in range(0,(len(ptxs_segs)-1),1):
             c_dist_y_2 = np.square(ptys_segs[segNum + 1][k] - circle2_y)
             c_dist_2 = np.sqrt(c_dist_x_2 + c_dist_y_2)
             
+        ptCount = 0
+        
         if((c_dist_1 <= r)|(c_dist_2 <= r)):
+            flag_corner = True
             
-            vels_smooth.append(1000)
+            if(c_dist_1 <= r):
+                circleNum = 1
+            elif (c_dist_2 <= r):
+                circleNum = 2
             
+           
+                
+            for a in range(point, len(ptxs_segs[segNum]) - 1, 1):
+                
+                vels_smooth.append(1000)
+                ptxs_smooth.append(ptxs_segs[segNum][a])
+                ptys_smooth.append(ptys_segs[segNum][a])
+                ptCount = ptCount + 1
+              
+                
             
-            
+            for b in range(0,ptCount,1):
+                vels_smooth.append(1000)
+                ptxs_smooth.append(ptxs_segs[segNum + 1][b])
+                ptys_smooth.append(ptys_segs[segNum + 1][b])
+                aNum_start = ptCount - 1
+            break
+                
+#            while(counter < ptCount):
+#                    
+#                vels_smooth.append(1000)
+#                ptxs_smooth.append(ptxs_segs[segNum + 1][counter])
+#                ptys_smooth.append(ptys_segs[segNum + 1][counter])
+#                counter = counter + 1
+#                print(ptxs_segs[segNum + 1][counter])
+#          
+#            aNum_start = ptCount - 1
+#            break
+        
+        
         else:
             vels_smooth.append(0)
+        
+        
+        if(flag_corner == False):
+            ptxs_smooth.append(ptxs_segs[segNum][point])
+            ptys_smooth.append(ptys_segs[segNum][point])
+            aNum_start = 0
+        else:
+            aNum_start = ptCount - 1  
             
-        ptxs_smooth.append(ptxs_segs[segNum][point])
-        ptys_smooth.append(ptys_segs[segNum][point])
         
-        
-      
-        
-    #        
-    #        if c_dist_1 <= r:
-    #            pass
-    #          
-    #            
-    #        if c_dist_2 <= r:
-    #  
 
-       
             
             
         # Calculate distance from a point in the next segment to the circle centers
