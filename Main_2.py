@@ -282,11 +282,12 @@ vels_smooth = []
 aNum_start = 0 # start point for the current segment
 slope = ""
 circleNum = -1
-
+arc_ptsx = []
+arc_ptsy = []
 for segNum in range(0,(len(ptxs_segs)-1),1):
     
     # Initialize
-    flag_corner = False # False if not reached a corner yet
+   
     m_y = ptys_way[segNum + 1] - ptys_way[segNum]
     m_x = ptxs_way[segNum + 1] - ptxs_way[segNum]
     
@@ -343,47 +344,127 @@ for segNum in range(0,(len(ptxs_segs)-1),1):
             c_dist_2 = np.sqrt(c_dist_x_2 + c_dist_y_2)
             
         ptCount = 0
-        
+        flag_corner = False # False if not reached a corner yet
         if((c_dist_1 <= r)|(c_dist_2 <= r)):
             flag_corner = True
             
             if(c_dist_1 <= r):
                 circleNum = 1
+                h  = circle1_x
+                k = circle1_y
             elif (c_dist_2 <= r):
                 circleNum = 2
+                h = circle2_x
+                k = circle2_y
+            pointx = ptxs_segs[segNum][point]
+            pointy = ptys_segs[segNum][point]
             
-           
+            
+#            for z in range(point, len(ptxs_segs[segNum]) - 1, 1):
+#                ptCount = ptCount + 1
+#            print(2*ptCount)
+##                
+#            
+#            for b in range(0,ptCount,1):
+#                vels_smooth.append(1000)
+#                ptxs_smooth.append(ptxs_segs[segNum + 1][b])
+#                ptys_smooth.append(ptys_segs[segNum + 1][b])
+#                aNum_start = ptCount - 1
                 
-            for a in range(point, len(ptxs_segs[segNum]) - 1, 1):
+            dista =  (np.square(pointx - ptxs_way[segNum + 1])) +  (np.square(pointy - ptys_way[segNum + 1]))
+            dista = np.sqrt(dista)
+            phib = np.arctan2(dista, r)
+            distb = (np.square(ptxs_way[segNum + 1] - ptxs_segs[segNum + 1][ptCount - 1]) + np.square(ptys_way[segNum + 1] - ptys_segs[segNum + 1][ptCount - 1]))
+            phia = np.arctan2(distb, r)
+            phia = phia * (180 / np.pi)
+            phib = phib * (180 / np.pi)   
+       
+   
+            
+            if(phia >= phib):
+                delta_phi1 = phia - phib
+                delta_phi2 = 360 - phia + phib
+            elif (phia < phib):
+                delta_phi1 = phib - phia
+                delta_phi2 = 360 - phib + phia
                 
+            if(delta_phi1 < delta_phi2):
+                delta_phi = delta_phi1
+                arcDir = "clockwise"
+            elif(delta_phi2 < delta_phi1):
+                delta_phi = delta_phi2
+                arcDir = "counter clockwise"
+            numofpoints = 2*(len(ptxs_segs[segNum]) - point) - 2
+          
+            phi_step = 180 / numofpoints
+            tally_phi = 0
+            arc_ptx = []
+            arc_pty = []
+            phia = phia * (np.pi / 180)
+            phib = phib * (np.pi / 180)
+            delta_phi1 = delta_phi1 *(np.pi / 180)
+            delta_phi2 = delta_phi2 * (np.pi / 180)
+            delta_phi = delta_phi * (np.pi /180)
+                
+            if(arcDir == "clockwise"):
+                
+                for e in range(0,numofpoints, 1):
+                    
+                    delta_x2 = pointx - ptxs_segs[segNum + 1][ptCount - 1]
+                    
+                    
+                    delta_arc_x = np.cos(delta_phi)*tally_phi
+                    delta_arc_y = tally_phi * np.sin(delta_phi)
+        
+                    arc_x = h - delta_arc_x
+                    arc_y = k + delta_arc_y
+                
+                    arc_ptx.append(arc_x)
+                    arc_pty.append(arc_y)
+                    
+                    tally_phi = tally_phi + phi_step
+                    print(delta_arc_x)
+                    print(delta_arc_y)
+                
+            elif(arcDir == "counter clockwise"):
+                for f in range(0,numofpoints, 1):
+                    delta_x2 = pointx - ptxs_segs[segNum + 1][ptCount - 1]
+                    delta_arc_x = np.cos(delta_phi)*tally_phi
+                
+                    delta_arc_y= tally_phi*np.sin(delta_phi)
+        
+                    arc_x = h + delta_arc_x
+                    arc_y = k + delta_arc_y
+                
+                    arc_ptx.append(arc_x)
+                    arc_pty.append(arc_y)
+                    tally_phi = tally_phi + phi_step
+                    print(delta_arc_x)
+                    print(delta_arc_y)
+                    
+            arc_ptsx.append(arc_ptx)
+            arc_ptsy.append(arc_pty)
+            
+    
+            for a in range(0, int(numofpoints/2) - 1, 1):
+                    
                 vels_smooth.append(1000)
-                ptxs_smooth.append(ptxs_segs[segNum][a])
-                ptys_smooth.append(ptys_segs[segNum][a])
+                ptxs_smooth.append(arc_ptx[a])
+                ptys_smooth.append(arc_pty[a])
+                    
                 ptCount = ptCount + 1
-              
-                
             
             for b in range(0,ptCount,1):
                 vels_smooth.append(1000)
-                ptxs_smooth.append(ptxs_segs[segNum + 1][b])
-                ptys_smooth.append(ptys_segs[segNum + 1][b])
+                ptxs_smooth.append(arc_ptx[b])
+                ptys_smooth.append(arc_pty[b])
                 aNum_start = ptCount - 1
+                     
             break
-                
-#            while(counter < ptCount):
-#                    
-#                vels_smooth.append(1000)
-#                ptxs_smooth.append(ptxs_segs[segNum + 1][counter])
-#                ptys_smooth.append(ptys_segs[segNum + 1][counter])
-#                counter = counter + 1
-#                print(ptxs_segs[segNum + 1][counter])
-#          
-#            aNum_start = ptCount - 1
-#            break
-        
-        
+
         else:
             vels_smooth.append(0)
+        
         
         
         if(flag_corner == False):
