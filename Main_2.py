@@ -333,14 +333,14 @@ for segNum in range(0,(len(ptxs_segs)-1),1):
             circle2_y = ptys_segs[segNum][point] 
 
         
-        for k in range(0, len(ptxs_segs[segNum + 1]) - 1, 1):
+        for g in range(0, len(ptxs_segs[segNum + 1]) - 1, 1):
          
-            c_dist_x_1 = np.square(ptxs_segs[segNum + 1][k] - circle1_x)
-            c_dist_y_1 = np.square(ptys_segs[segNum + 1][k] - circle1_y)
+            c_dist_x_1 = np.square(ptxs_segs[segNum + 1][g] - circle1_x)
+            c_dist_y_1 = np.square(ptys_segs[segNum + 1][g] - circle1_y)
             c_dist_1 = np.sqrt(c_dist_x_1 + c_dist_y_1)
             
-            c_dist_x_2 = np.square(ptxs_segs[segNum + 1][k] - circle2_x)
-            c_dist_y_2 = np.square(ptys_segs[segNum + 1][k] - circle2_y)
+            c_dist_x_2 = np.square(ptxs_segs[segNum + 1][g] - circle2_x)
+            c_dist_y_2 = np.square(ptys_segs[segNum + 1][g] - circle2_y)
             c_dist_2 = np.sqrt(c_dist_x_2 + c_dist_y_2)
             
         ptCount = 0
@@ -358,6 +358,8 @@ for segNum in range(0,(len(ptxs_segs)-1),1):
                 k = circle2_y
             pointx = ptxs_segs[segNum][point]
             pointy = ptys_segs[segNum][point]
+#            numofpoints = (len(ptxs_segs[segNum]) - segNum) + (g+1)
+            numofpoints =  (len(ptxs_segs[segNum]) - point) + g
             
             
 #            for z in range(point, len(ptxs_segs[segNum]) - 1, 1):
@@ -370,83 +372,101 @@ for segNum in range(0,(len(ptxs_segs)-1),1):
 #                ptxs_smooth.append(ptxs_segs[segNum + 1][b])
 #                ptys_smooth.append(ptys_segs[segNum + 1][b])
 #                aNum_start = ptCount - 1
-                
-            dista =  (np.square(pointx - ptxs_way[segNum + 1])) +  (np.square(pointy - ptys_way[segNum + 1]))
-            dista = np.sqrt(dista)
-            phib = np.arctan2(dista, r)
-            distb = (np.square(ptxs_way[segNum + 1] - ptxs_segs[segNum + 1][ptCount - 1]) + np.square(ptys_way[segNum + 1] - ptys_segs[segNum + 1][ptCount - 1]))
-            phia = np.arctan2(distb, r)
-            phia = phia * (180 / np.pi)
-            phib = phib * (180 / np.pi)   
+            
+            phia = np.arctan2(ptys_segs[segNum][point] - k, ptxs_segs[segNum][point] - h)
+            if(phia<0): phia += 2.0*np.pi
+            phib = np.arctan2(ptys_segs[segNum + 1][g] - k, ptxs_segs[segNum + 1][g] -h)
+            if(phib<0): phib += 2.0*np.pi
+            
+#            phia = phia * (180 / np.pi)
+#            phib = phib * (180 / np.pi)   
        
    
             
             if(phia >= phib):
                 delta_phi1 = phia - phib
-                delta_phi2 = 360 - phia + phib
-            elif (phia < phib):
-                delta_phi1 = phib - phia
-                delta_phi2 = 360 - phib + phia
+                delta_phi2 = (2.0*np.pi) - phia + phib
+                if(delta_phi1<=delta_phi2):
+                    delta_phi = delta_phi1
+                    arcDir = "clockwise"
+                else:
+                    delta_phi = delta_phi2
+                    arcDir = "counter clockwise"
+            else:
                 
-            if(delta_phi1 < delta_phi2):
-                delta_phi = delta_phi1
-                arcDir = "clockwise"
-            elif(delta_phi2 < delta_phi1):
-                delta_phi = delta_phi2
-                arcDir = "counter clockwise"
-            numofpoints = 2*(len(ptxs_segs[segNum]) - point) - 2
-          
-            phi_step = 180 / numofpoints
+                delta_phi1 = phib - phia
+                delta_phi2 = (2.0*np.pi) - phib + phia
+                if(delta_phi1 <= delta_phi2):
+                    delta_phi = delta_phi1
+                    arcDir = "counter clockwise"
+                else:
+                    delta_phi = delta_phi2
+                    arcDir = "clockwise"
+                
+            
+           
             tally_phi = 0
             arc_ptx = []
             arc_pty = []
-            phia = phia * (np.pi / 180)
-            phib = phib * (np.pi / 180)
-            delta_phi1 = delta_phi1 *(np.pi / 180)
-            delta_phi2 = delta_phi2 * (np.pi / 180)
-            delta_phi = delta_phi * (np.pi /180)
-                
+#            phia = phia * (np.pi / 180)
+#            phib = phib * (np.pi / 180)
+#            delta_phi1 = delta_phi1 *(np.pi / 180)
+#            delta_phi2 = delta_phi2 * (np.pi / 180)
+#            delta_phi = delta_phi * (np.pi /180)
+            phi_step = delta_phi / numofpoints
+            print(arcDir)
+            
             if(arcDir == "clockwise"):
                 
-                for e in range(0,numofpoints, 1):
+#                for h in range(int(phia), int(phib), int(phi_step)):
+#                    phi_c = np.pi - (phia - tally_phi)
+#                    delta_arc_x = r * np.cos(phi_c)
+#                    delta_arc_y = r * np.sin(phi_c)
+#                    
+#                    arc_x = h + delta_arc_x
+#                    arc_y = k + delta_arc_y
+#                
+#                    arc_ptx.append(arc_x)
+#                    arc_pty.append(arc_y)
+#                    
+#                    tally_phi = tally_phi + phi_step
+                
+                for e in range(0, numofpoints, 1):
                     
-                    delta_x2 = pointx - ptxs_segs[segNum + 1][ptCount - 1]
+                    phi_c = (phia - tally_phi)
+                    delta_arc_x = r * np.cos(phi_c)
+                    delta_arc_y = r * np.sin(phi_c)
+                    
+                    arc_x = h + delta_arc_x
+                    arc_y = k + delta_arc_y
+                  
+                    tally_phi = tally_phi + phi_step
+                    arc_ptx.append(arc_x)
+                    arc_pty.append(arc_y)
                     
                     
-                    delta_arc_x = np.cos(delta_phi)*tally_phi
-                    delta_arc_y = tally_phi * np.sin(delta_phi)
+                 
+                
+            elif(arcDir == "counter clockwise"):
+                for f in range(0,2 * numofpoints, 1):
+                     
+                    phi_c = np.pi - (phia + tally_phi)
+                    delta_arc_x = r * np.cos(phi_c)
+                    delta_arc_y = r * np.sin(phi_c)
+        
         
                     arc_x = h - delta_arc_x
                     arc_y = k + delta_arc_y
-                
-                    arc_ptx.append(arc_x)
-                    arc_pty.append(arc_y)
                     
-                    tally_phi = tally_phi + phi_step
-                    print(delta_arc_x)
-                    print(delta_arc_y)
-                
-            elif(arcDir == "counter clockwise"):
-                for f in range(0,numofpoints, 1):
-                    delta_x2 = pointx - ptxs_segs[segNum + 1][ptCount - 1]
-                    delta_arc_x = np.cos(delta_phi)*tally_phi
-                
-                    delta_arc_y= tally_phi*np.sin(delta_phi)
-        
-                    arc_x = h + delta_arc_x
-                    arc_y = k + delta_arc_y
-                
                     arc_ptx.append(arc_x)
                     arc_pty.append(arc_y)
                     tally_phi = tally_phi + phi_step
-                    print(delta_arc_x)
-                    print(delta_arc_y)
                     
             arc_ptsx.append(arc_ptx)
             arc_ptsy.append(arc_pty)
-            
+            ptCount = 0
     
-            for a in range(0, int(numofpoints/2) - 1, 1):
+            for a in range(0, len(ptxs_segs[segNum]) - point, 1):
                     
                 vels_smooth.append(1000)
                 ptxs_smooth.append(arc_ptx[a])
@@ -458,7 +478,7 @@ for segNum in range(0,(len(ptxs_segs)-1),1):
                 vels_smooth.append(1000)
                 ptxs_smooth.append(arc_ptx[b])
                 ptys_smooth.append(arc_pty[b])
-                aNum_start = ptCount - 1
+                aNum_start = (ptCount )- 1
                      
             break
 
