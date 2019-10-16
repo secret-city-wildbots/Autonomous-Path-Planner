@@ -308,6 +308,7 @@ for segNum in range(0,(len(ptxs_segs)-1),1):
             slope = "negative"
         if m == 0:
             slope = "0"
+    print(aNum_start)
     for point in range(aNum_start, len(ptxs_segs[segNum]) - 1, 1):
        
         
@@ -346,7 +347,7 @@ for segNum in range(0,(len(ptxs_segs)-1),1):
         ptCount = 0
         flag_corner = False # False if not reached a corner yet
         if((c_dist_1 <= r)|(c_dist_2 <= r)):
-            flag_corner = True
+#            flag_corner = True
             
             if(c_dist_1 <= r):
                 circleNum = 1
@@ -358,31 +359,11 @@ for segNum in range(0,(len(ptxs_segs)-1),1):
                 k = circle2_y
             pointx = ptxs_segs[segNum][point]
             pointy = ptys_segs[segNum][point]
-#            numofpoints = (len(ptxs_segs[segNum]) - segNum) + (g+1)
             numofpoints =  (len(ptxs_segs[segNum]) - point) + g
-            
-            
-#            for z in range(point, len(ptxs_segs[segNum]) - 1, 1):
-#                ptCount = ptCount + 1
-#            print(2*ptCount)
-##                
-#            
-#            for b in range(0,ptCount,1):
-#                vels_smooth.append(1000)
-#                ptxs_smooth.append(ptxs_segs[segNum + 1][b])
-#                ptys_smooth.append(ptys_segs[segNum + 1][b])
-#                aNum_start = ptCount - 1
-            
             phia = np.arctan2(ptys_segs[segNum][point] - k, ptxs_segs[segNum][point] - h)
             if(phia<0): phia += 2.0*np.pi
             phib = np.arctan2(ptys_segs[segNum + 1][g] - k, ptxs_segs[segNum + 1][g] -h)
             if(phib<0): phib += 2.0*np.pi
-            
-#            phia = phia * (180 / np.pi)
-#            phib = phib * (180 / np.pi)   
-       
-   
-            
             if(phia >= phib):
                 delta_phi1 = phia - phib
                 delta_phi2 = (2.0*np.pi) - phia + phib
@@ -402,34 +383,14 @@ for segNum in range(0,(len(ptxs_segs)-1),1):
                 else:
                     delta_phi = delta_phi2
                     arcDir = "clockwise"
-                
-            
-           
             tally_phi = 0
             arc_ptx = []
             arc_pty = []
-#            phia = phia * (np.pi / 180)
-#            phib = phib * (np.pi / 180)
-#            delta_phi1 = delta_phi1 *(np.pi / 180)
-#            delta_phi2 = delta_phi2 * (np.pi / 180)
-#            delta_phi = delta_phi * (np.pi /180)
             phi_step = delta_phi / numofpoints
             print(arcDir)
             
             if(arcDir == "clockwise"):
                 
-#                for h in range(int(phia), int(phib), int(phi_step)):
-#                    phi_c = np.pi - (phia - tally_phi)
-#                    delta_arc_x = r * np.cos(phi_c)
-#                    delta_arc_y = r * np.sin(phi_c)
-#                    
-#                    arc_x = h + delta_arc_x
-#                    arc_y = k + delta_arc_y
-#                
-#                    arc_ptx.append(arc_x)
-#                    arc_pty.append(arc_y)
-#                    
-#                    tally_phi = tally_phi + phi_step
                 
                 for e in range(0, numofpoints, 1):
                     
@@ -444,10 +405,8 @@ for segNum in range(0,(len(ptxs_segs)-1),1):
                     arc_ptx.append(arc_x)
                     arc_pty.append(arc_y)
                     
-                    
-                 
-                
             elif(arcDir == "counter clockwise"):
+                
                 for f in range(0,2 * numofpoints, 1):
                      
                     phi_c = np.pi - (phia + tally_phi)
@@ -462,37 +421,35 @@ for segNum in range(0,(len(ptxs_segs)-1),1):
                     arc_pty.append(arc_y)
                     tally_phi = tally_phi + phi_step
                     
-            arc_ptsx.append(arc_ptx)
-            arc_ptsy.append(arc_pty)
-            ptCount = 0
+                arc_ptsx.append(arc_ptx)
+                arc_ptsy.append(arc_pty)
+                ptCount = 0
+                
+            aa = 0
+            for a in range(point,len(ptxs_segs[segNum]) - point, 1):
+                vels_smooth.append(1000)
+                ptxs_smooth.append(arc_ptx[aa])
+                ptys_smooth.append(arc_pty[aa])
+                aa += 1
+                
+            for b in range(0,g,1):
+                vels_smooth.append(1000)
+                ptxs_smooth.append(arc_ptx[aa])
+                ptys_smooth.append(arc_pty[aa])
+                aa += 1
     
-            for a in range(0, len(ptxs_segs[segNum]) - point, 1):
-                    
-                vels_smooth.append(1000)
-                ptxs_smooth.append(arc_ptx[a])
-                ptys_smooth.append(arc_pty[a])
-                    
-                ptCount = ptCount + 1
+#        else:
+#                vels_smooth.append(0)
             
-            for b in range(0,ptCount,1):
-                vels_smooth.append(1000)
-                ptxs_smooth.append(arc_ptx[b])
-                ptys_smooth.append(arc_pty[b])
-                aNum_start = (ptCount )- 1
-                     
-            break
-
-        else:
-            vels_smooth.append(0)
-        
-        
-        
+        print(flag_corner)
         if(flag_corner == False):
+            vels_smooth.append(0)
             ptxs_smooth.append(ptxs_segs[segNum][point])
             ptys_smooth.append(ptys_segs[segNum][point])
             aNum_start = 0
         else:
-            aNum_start = ptCount - 1  
+            aNum_start = g + 1
+            break
             
         
 
@@ -527,15 +484,15 @@ for segNum in range(0,(len(ptxs_segs)-1),1):
             
             
             
-
-# Include the last line segment in the smoothed path
-for i in range(aNum_start,len(ptxs_segs[-1]),1):
-    ptxs_smooth.append(ptxs_segs[-1][i])
-    ptys_smooth.append(ptys_segs[-1][i])
-    vels_smooth.append(0.0)
-ptxs_smooth.append(ptxs_way[-1])
-ptys_smooth.append(ptys_way[-1])
-vels_smooth.append(0.0)
+#
+## Include the last line segment in the smoothed path
+#for i in range(aNum_start,len(ptxs_segs[-1]),1):
+#    ptxs_smooth.append(ptxs_segs[-1][i])
+#    ptys_smooth.append(ptys_segs[-1][i])
+#    vels_smooth.append(0.0)
+#ptxs_smooth.append(ptxs_way[-1])
+#ptys_smooth.append(ptys_way[-1])
+#vels_smooth.append(0.0)
 
 
 
