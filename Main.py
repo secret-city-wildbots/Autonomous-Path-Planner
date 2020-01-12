@@ -1,4 +1,4 @@
-# Date: 2019-10-9
+# Date: 2020-01-12
 # Author: Secret City Wildbots
 # Description: allows the user to load an image of the field and generate a 
 #              planned path for the robot to follow
@@ -6,13 +6,16 @@
 
 # Load external libraries
 import cv2 # OpenCV
+import datetime
 import matplotlib.pyplot as plt # plotting functionality
 import numpy as np # math operations
 from pylab import ginput # get user mouse inputs
 import tkinter as tk # file UI
+from tkinter import messagebox
 root = tk.Tk() # suppress the default window
 root.withdraw() # suppress the default window
 from tkinter import filedialog # file UI
+import xlrd # Excel read functionality
 import xlwt # Excel write functionality
 
 # Change Environment settings (some are only applicable if running in an iPython console)
@@ -26,10 +29,10 @@ plt.rcParams.update({'font.size': 24}) # change the default font size for plots
 #------------------------------------------------------------------------------
 
 # Parameters
-fieldx = 54.0 # [feet] field length
-fieldy = 27.0 # [feet] field width
+fieldx = 52 # [feet] field length
+fieldy = 27 # [feet] field width
 res = 100 # controls the resolution of the displayed image
-thresh_samePt = 5 # [inches] if the selected point is closer than this, you wille edit a previous point
+thresh_samePt = 5 # [inches] if the selected point is closer than this, you will edit a previous point
 maxVel_init = 15 # [ft/s] maximum robot velocity
 delta_s_init = 1 # [inches] step length along the path
 r_min_init = 12 # [inches] turn radius at v = 0
@@ -177,6 +180,62 @@ def saveWorkbook(book,filepath):
         
     return flag_saveok
 
+#------------------------------------------------------------------------------
+    
+def readWorkbookColumn(book,sheet,headerHeight,column,fmt):
+    """ Reads data from a specified column in a workbook 
+    Args:
+        book: workbook object
+        sheet: workbook sheet number
+        headerHeight: number of rows that should be ignored as part of the header
+        column: target column index as a string, e.g. 'AM'
+        fmt: expected data format, options are 'date', 'int', 'float', and 'string'
+    Returns:
+        values: a list containing all of the formatted values from the targeted column
+    Saves:
+        None
+    """
+
+    # Initialize
+    table = book.sheet_by_index(sheet)
+    nRows = table.nrows # not counting the header row
+    values = []
+    
+    # Parse column information
+    alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+    numDigits = len(column)
+    digits = []
+    for i in range(0,numDigits,1):
+        for j in range(0,len(alphabet),1):
+            if(column[i]==alphabet[j]): break
+        digits.append(j)
+    column_idx = 0
+    for i in range(0,numDigits,1):
+        column_idx += (digits[i]+1)*(len(alphabet)**(numDigits-i-1))
+    column_idx -= 1
+
+    for i in range(headerHeight,nRows,1):
+        
+        # Pull the value from the current cell
+        value = table.cell_value(rowx=i,colx=column_idx)
+               
+        # Format the value
+        if(fmt=='date'): value = datetime.datetime(*xlrd.xldate_as_tuple(value,book.datemode))
+        elif(fmt=='int'): 
+            try: value = int(value)
+            except: value = 0
+        elif(fmt=='float'): 
+            try: value = float(value)
+            except: value = 0.0
+        elif(fmt=='string'):  
+            pass
+        
+        # Add the value to the list of values
+        values.append(value)
+        
+    return values
+
+    
 #------------------------------------------------------------------------------
     
 def generatePath(ptxs_way,ptys_way,vels_way,oris_way):
@@ -461,6 +520,30 @@ def actionPlan():
     I = cv2.imread(path_I,cv2.IMREAD_GRAYSCALE) # load the selected image 
     I = cv2.resize(I,(int(res*fieldx),int(res*fieldy))) # resize the image
     
+    # Ask the user to pre-load any way points
+    userInput = messagebox.askyesno("Path Planned", "Load Saved Waypoints?")
+    if(userInput):
+        
+        # Load the selected waypoints
+        path_way = filedialog.askopenfilename(initialdir='',title="Load Saved Waypoints",filetypes=[('Paths','*xls')]);
+        book = xlrd.open_workbook(path_way)
+        ptxs_way_load = readWorkbookColumn(book,0,1,'G','float')
+        ptys_way_load = readWorkbookColumn(book,0,1,'H','float')
+        vels_way_load = readWorkbookColumn(book,0,1,'I','float')
+        oris_way_load = readWorkbookColumn(book,0,1,'J','string')
+        
+        # Remove extra points (assumes you don't ever go to y = 0.0)
+        for i in range(0,len(ptys_way_load),1):
+            if(ptys_way_load[i]==0): break;
+        ptxs_way_load = ptxs_way_load[0:i]
+        ptys_way_load = ptys_way_load[0:i]
+        vels_way_load = vels_way_load[0:i]
+        oris_way_load = oris_way_load[0:i]
+        
+    else:
+            
+        ptxs_way_load = [] # initialize
+    
     # Correct image color
     I_color = np.zeros((I.shape[0],I.shape[1],3),np.uint8)
     if(len(I.shape)==2):
@@ -533,6 +616,8 @@ def actionPlan():
     hs_way = [] # initialize
     hs_smooth = [] # initialize
     hs_ori = [] # initialize
+    numLoaded = len(ptxs_way_load)
+    loadedNum = 0
     while(flag_abort==False):
         
         # Pull the current parameters
@@ -542,13 +627,19 @@ def actionPlan():
         except: delta_s = delta_s_init
         
         # Check for click
-        pt = ginput(1,show_clicks=True,timeout=0.25,mouse_add=3,mouse_pop=None,mouse_stop=1) 
+        if(loadedNum<numLoaded): pt = [0]
+        else: pt = ginput(1,show_clicks=True,timeout=0.25,mouse_add=3,mouse_pop=None,mouse_stop=1) 
+            
         
         if(len(pt)!=0): 
             
             # Convert the point into real units
-            x_new = pt[0][0]/scale_pi # [in]
-            y_new = (fieldy_pixels-pt[0][1])/scale_pi # [in]
+            if(loadedNum<numLoaded):
+                x_new = ptxs_way_load[loadedNum]
+                y_new = ptys_way_load[loadedNum]
+            else:
+                x_new = pt[0][0]/scale_pi # [in]
+                y_new = (fieldy_pixels-pt[0][1])/scale_pi # [in]
             
             # Check to see if this is a new or a pre-exisiting point
             flag_newPt = True
@@ -562,7 +653,13 @@ def actionPlan():
             # Edit or add a new point
             if(flag_newPt):
                 # Add a new point
-                [ptx,pty,vel,ori] = textEntryWidget('New Way Point #%i' %(i+1),x_new,y_new)
+                if(loadedNum<numLoaded):
+                    ptx = ptxs_way_load[loadedNum]
+                    pty = ptys_way_load[loadedNum]
+                    vel = vels_way_load[loadedNum]/12
+                    ori = oris_way_load[loadedNum]
+                else:
+                    [ptx,pty,vel,ori] = textEntryWidget('New Way Point #%i' %(i+1),x_new,y_new)
             else:
                 # Edit an existing point
                 print('editing')
@@ -632,12 +729,15 @@ def actionPlan():
                     h = plt.plot(np.array([xa,xb]),np.array([ya,yb]),color='k')
                     hs_ori.append(h)
                     
+            # Increment through the loaded path
+            if(loadedNum<numLoaded): loadedNum += 1
+                    
     # Save the generated path to a spreadsheet
     plt.pause(1.0)
     path_save = filedialog.asksaveasfilename(title='Save Path File',filetypes=[('Spreadsheet','*.xls')])
     if(len(path_save)!=0):
-        [book,sheets] = openWorkbook(['Smooth Path','Waypoints'],[['Distance (in)','Time (s)','X (in)','Y (in)','Velocity (in/s)','Orientation (deg)'],['X (in)','Y (in)','Velocity (in/s)','Orientation (deg)']])
-        data = [[np.array(dsts_smooth),np.array(tims_smooth),np.array(ptxs_smooth),np.array(ptys_smooth),np.array(vels_smooth),np.array(oris_smooth)],[np.array(ptxs_way),np.array(ptys_way),np.array(vels_way),np.array(oris_way)]]
+        [book,sheets] = openWorkbook(['Smooth Path and Waypoints'],[['Distance (in)','Time (s)','X (in)','Y (in)','Velocity (in/s)','Orientation (deg)','Way X (in)','Way Y (in)','Way Velocity (in/s)','Way Orientation (deg)']])
+        data = [[np.array(dsts_smooth),np.array(tims_smooth),np.array(ptxs_smooth),np.array(ptys_smooth),np.array(vels_smooth),np.array(oris_smooth),np.array(ptxs_way),np.array(ptys_way),np.array(vels_way),np.array(oris_way)]]
         saveToWorkbook(book,sheets,data)
         saveWorkbook(book,path_save)
 
