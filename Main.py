@@ -83,7 +83,7 @@ def textEntryWidget(title,x_init,y_init,**kwargs):
     labelFieldPosX = tk.Label(textwindow,text='\nX Position (in)',fg='#%02x%02x%02x' % ((0,0,0)),bg='#%02x%02x%02x' % ((245,245,245)),font=('Arial',16),height=2,width=30,anchor='w')
     labelFieldPosY = tk.Label(textwindow,text='Y Position (in)',fg='#%02x%02x%02x' % ((0,0,0)),bg='#%02x%02x%02x' % ((245,245,245)),font=('Arial',16),height=1,width=30,anchor='w')  
     labelFieldVelocity = tk.Label(textwindow,text='Velocity (ft/s)',fg='#%02x%02x%02x' % ((0,0,0)),bg='#%02x%02x%02x' % ((245,245,245)),font=('Arial',16),height=1,width=30,anchor='w')
-    labelFieldOrientation = tk.Label(textwindow,text='Orientation (deg)',fg='#%02x%02x%02x' % ((0,0,0)),bg='#%02x%02x%02x' % ((245,245,245)),font=('Arial',16),height=1,width=30,anchor='w')         
+    labelFieldOrientation = tk.Label(textwindow,text='Orientation (deg) [0-360]',fg='#%02x%02x%02x' % ((0,0,0)),bg='#%02x%02x%02x' % ((245,245,245)),font=('Arial',16),height=1,width=30,anchor='w')         
     labelFieldPosX.pack()                              
     entryFieldPosX.pack()
     labelFieldPosY.pack()
@@ -272,7 +272,20 @@ def generatePath(ptxs_way,ptys_way,vels_way,oris_way):
         delta_y = delta_s*np.sin(gamma)
         delta_v = (vels_way[i+1]-vels_way[i])/max_s
         if((oris_way[i]!='ahead')&(oris_way[i+1]!='ahead')):
-            delta_o = (oris_way[i+1]-oris_way[i])/max_s
+            if(oris_way[i+1]>oris_way[i]):
+                delta_oseg1 = oris_way[i+1]-oris_way[i]
+                delta_oseg2 = 360 - delta_oseg1
+                if(delta_oseg1<delta_oseg2):
+                    delta_o = delta_oseg1/max_s
+                else:
+                    delta_o = -delta_oseg2/max_s
+            else:
+                delta_oseg1 = oris_way[i]-oris_way[i+1]
+                delta_oseg2 = 360 - delta_oseg1
+                if(delta_oseg1<delta_oseg2):
+                    delta_o = -delta_oseg1/max_s
+                else:
+                    delta_o = delta_oseg2/max_s
         
         # Include the current waypoint
         ptxs_seg.append(ptxs_way[i]) 
@@ -289,7 +302,7 @@ def generatePath(ptxs_way,ptys_way,vels_way,oris_way):
             ptys_seg.append(ptys_seg[-1]+delta_y)
             vels_seg.append(vels_seg[-1]+delta_v)
             if((oris_way[i]!='ahead')&(oris_way[i+1]!='ahead')):
-                oris_seg.append(oris_seg[-1]+delta_o)
+                oris_seg.append((oris_seg[-1]+delta_o)%360)
             else: 
                 oris_seg.append('ahead')
             total_s += delta_s 
