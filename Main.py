@@ -29,8 +29,8 @@ plt.rcParams.update({'font.size': 24}) # change the default font size for plots
 #------------------------------------------------------------------------------
 
 # Parameters
-fieldx = 52 # [feet] field length
-fieldy = 27 # [feet] field width
+fieldx = 52.4375 # [feet] field length
+fieldy = 26.9375 # [feet] field width
 res = 100 # controls the resolution of the displayed image
 thresh_samePt = 5 # [inches] if the selected point is closer than this, you will edit a previous point
 maxVel_init = 15 # [ft/s] maximum robot velocity
@@ -581,27 +581,27 @@ def actionPlan():
     scale_pf = I.shape[0]/fieldy # [pix/ft] recover the scaling between the image and real life
     scale_pi = scale_pf/12 # [pix/inches]
     fieldy_pixels = I.shape[0] # [pixels] width of the field in pixels
-    xticks_num = (np.round(np.linspace(0,I.shape[1],numxticks+1)/scale_pf)).astype(int)
-    yticks_num = (np.round(np.linspace(0,I.shape[0],numyticks+1)/scale_pf)).astype(int)
-    xticks_str = []
-    yticks_str = []
-    for i in range(0,len(xticks_num),1):
-        xticks_str.append(str(xticks_num[i]))
-    for i in range(0,len(yticks_num),1):
-        yticks_str.append(str(yticks_num[i])) 
-    yticks_str = np.flip(yticks_str,0)
-    ax.set_xticklabels(xticks_str)
-    ax.set_yticklabels(yticks_str)
-    xstep = (scale_pf*fieldx/(numxticks))
-    ystep = (scale_pf*fieldy/(numyticks))
-    xticklocs = np.zeros((numxticks+1),float)
-    yticklocs = np.zeros((numyticks+1),float)
-    xticklocs[0:numxticks] = np.arange(0,I.shape[1]-0.1,xstep)
-    yticklocs[0:numyticks] = np.arange(0,I.shape[0]-0.1,ystep)
-    xticklocs[numxticks] = I.shape[1]
-    yticklocs[numyticks] = I.shape[0]
-    ax.set_xticks(xticklocs,minor=False)
-    ax.set_yticks(yticklocs,minor=False)
+#    xticks_num = (np.round(np.linspace(0,I.shape[1],numxticks+1)/scale_pf)).astype(int)
+#    yticks_num = (np.round(np.linspace(0,I.shape[0],numyticks+1)/scale_pf)).astype(int)
+#    xticks_str = []
+#    yticks_str = []
+#    for i in range(0,len(xticks_num),1):
+#        xticks_str.append(str(xticks_num[i]))
+#    for i in range(0,len(yticks_num),1):
+#        yticks_str.append(str(yticks_num[i])) 
+#    yticks_str = np.flip(yticks_str,0)
+#    ax.set_xticklabels(xticks_str)
+#    ax.set_yticklabels(yticks_str)
+#    xstep = (scale_pf*int(fieldx)/(numxticks))
+#    ystep = (scale_pf*int(fieldy)/(numyticks))
+#    xticklocs = np.zeros((numxticks+1),float)
+#    yticklocs = np.zeros((numyticks+1),float)
+#    xticklocs[0:numxticks] = np.arange(0,I.shape[1]-0.1,xstep)
+#    yticklocs[0:numyticks] = np.arange(0,I.shape[0]-0.1,ystep)
+#    xticklocs[numxticks] = I.shape[1]
+#    yticklocs[numyticks] = I.shape[0]
+#    ax.set_xticks(xticklocs,minor=False)
+#    ax.set_yticks(yticklocs,minor=False)
     plt.grid(b=None,which='major',axis='both',color=np.array([0.8,0.8,0.8]))
     
     # Label the axes    
