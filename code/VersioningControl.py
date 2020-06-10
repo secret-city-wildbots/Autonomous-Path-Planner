@@ -1,5 +1,4 @@
 # Date: 2020-06-09
-# Author: Luke Scime
 # Description: auto-generates the readme.txt file and handle software upgrades
 # and installation
 #-----------------------------------------------------------------------------

@@ -1,5 +1,4 @@
 # Date: 2020-06-09
-# Author: Luke Scime
 # Description: a path planner for FRC 2020
 #-----------------------------------------------------------------------------
 
@@ -67,6 +66,7 @@ from tkinter import messagebox # TkInter popup windows
 
 # Load remaining user modules
 import GeneralSupportFunctions as gensup # general support functions
+import PathPlanning as plan # pathe planner
 
 # Load persistent variables
 h_npz_settings = np.load(dirPvars+'settings.npz',allow_pickle=True)
@@ -75,9 +75,7 @@ recognizedImageExtensions = np.ndarray.tolist(h_npz_settings['recognizedImageExt
 guiColor_black = h_npz_settings['guiColor_black']
 guiColor_white = h_npz_settings['guiColor_white']
 guiColor_offwhite = h_npz_settings['guiColor_offwhite']
-guiColor_darkgreen = h_npz_settings['guiColor_darkgreen']
-guiColor_lightgreen = h_npz_settings['guiColor_lightgreen']
-guiColor_red = h_npz_settings['guiColor_red']
+guiColor_hotpink = h_npz_settings['guiColor_hotpink']
 guiFontSize_large = h_npz_settings['guiFontSize_large']
 guiFontSize_small = h_npz_settings['guiFontSize_small']
 guiFontType_normal = h_npz_settings['guiFontType_normal']
@@ -109,6 +107,25 @@ else: plt.rcParams.update({'figure.dpi': 100})
 guiFontSize_large = int(np.ceil(guiFontSize_large*(guiScaling**1)))
 guiFontSize_small = int(np.ceil(guiFontSize_small*(guiScaling**1)))
 
+#-----------------------------------------------------------------------------
+
+class Path(): 
+    """
+    Data object for the current path
+    """
+    
+    def __init__(self):
+        
+        self.x_real = 12*52.4375 # (in) length of the field
+        self.y_real = 12*26.9375 # (in) width of the field
+        self.v_max = 12*15.0 # (in/s) maximum robot velocity
+        self.step_size = 1.0 # (in) path step size
+        self.radius_min = 12.0 # (in) minimum robot turn radius
+        self.radius_max = 100.0 # (in) maximum robot turn radius
+        
+# Instantiate the robot path
+path = Path()
+    
 #-----------------------------------------------------------------------------
 
 # Initialize global variables
@@ -164,10 +181,41 @@ def actionQuit(*args):
 
 #-----------------------------------------------------------------------------
 
+def actionApplySettings(*args):
+    """
+    Check the settings for errors and save them
+    """
+    
+    # Check entries for errors
+    flags = True
+    [x_real,flags] = gensup.safeTextEntry(flags,textFields[0]['field'],'float',vmin=0.0,vmax=100.0)
+    [y_real,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=0.0,vmax=100.0)
+    [v_max,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=1.0,vmax=30.0)
+    [step_size,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=1.0,vmax=100.0)
+    [radius_min,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=1.0,vmax=1000.0)
+    [radius_max,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=1.1*radius_min,vmax=1000.0)
+    
+    # Save the error-free entries in the correct units
+    if(flags):
+        path.x_real = 12.0*x_real
+        path.y_real = 12.0*y_real
+        path.v_max = 12.0*v_max
+        path.step_size =step_size
+        path.radius_min = radius_min
+        path.radius_max = radius_max
+    
+#-----------------------------------------------------------------------------
+
 def actionLoadField(*args):
     """
     ***
     """
+    
+    # Ask the user to load a field map
+    path_I = filedialog.askopenfilename(initialdir='../field drawings/',title = 'Select a Field Drawing',filetypes=recognizedImageExtensions)
+    
+    # Ask the user to load a previous path
+    #***
     
     print('yolo')
     
@@ -177,7 +225,7 @@ def actionLoadField(*args):
 guiwindow = tk.Tk()
 guiwindow.title(softwareName)
 windW = int(0.3*min(1080,minScrnDim)) # window width
-windH = int(0.6*min(1080,minScrnDim)) # window height 
+windH = int(0.65*min(1080,minScrnDim)) # window height 
 guiwindow.geometry(str(windW)+'x'+str(windH))
 guiwindow.configure(background=guiColor_offwhite)
 guiwindow.resizable(width=False, height=False)
@@ -188,15 +236,31 @@ guiwindow.geometry("+{}+{}".format(int(0.5*(guiwindow.winfo_screenwidth()-windW)
 # Configure to handle use of the Windows close button
 guiwindow.protocol('WM_DELETE_WINDOW',actionQuit)
 
-
 # Set up the logos
 logo = tk.Canvas(guiwindow,width=int(466*guiScaling),height=int(232*guiScaling),highlightthickness=0,background=guiColor_offwhite)  
 I_logo = gensup.convertColorSpace(cv2.imread(dirPvars+'graphic_4265.png')) # load the default image
 gensup.easyTkImageDisplay(guiwindow,logo,I_logo,forceSize=[int(466*guiScaling),int(232*guiScaling)])
 
+# Define the settings fields
+fieldNames = ['Field Length (ft)',
+              'Field Width (ft)',
+              'Maximum Robot Velocity (ft/s)',
+              'Step Size (in)',
+              'Minimum Turn Radius (in)',
+              'Maximum Turn Radius (in)']
+defaults = [path.x_real/12.0,
+            path.y_real/12.0,
+            path.v_max/12.0,
+            path.step_size,
+            path.radius_min,
+            path.radius_max]
 
-# Set dynamic text
-selectedBanner = tk.Label(guiwindow,text='',fg=guiColor_black,bg=guiColor_offwhite,font=(guiFontType_normal,guiFontSize_large),height=1,width=55,anchor='w')
+# Set up the settings elements
+textFields = []
+for i in range(0,len(fieldNames),1):
+    [title,field] = gensup.easyTextField(guiwindow,windW,fieldNames[i],str(defaults[i]))
+    textFields.append({'title': title, 'field': field})
+buttonApply = tk.Button(guiwindow,text='Apply',fg=guiColor_black,bg=guiColor_hotpink,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.02*windW),command=actionApplySettings)
 
 # Set up the menu bar
 menubar = tk.Menu(guiwindow)
@@ -207,7 +271,11 @@ menubar.add_cascade(label='File',menu=menuFile)
 guiwindow.config(menu=menubar)
 
 # Place all elements
-easyPlace(logo,0.01,0.01)
+for i in range(0,len(textFields),1):
+    textFields[i]['title'].pack(fill='both')
+    textFields[i]['field'].pack()
+buttonApply.pack(pady=20)
+logo.pack(pady=20)
 
 # Final GUI initializations
 
