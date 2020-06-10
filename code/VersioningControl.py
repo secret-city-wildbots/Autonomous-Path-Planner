@@ -45,11 +45,8 @@ def install():
         # Create always-local directories
         try: os.mkdir(dirPvars)
         except: pass
-        try: os.mkdir('../workspaces')
-        except: pass
             
         # Move supporting files to the correct folders
-        os.system('move '+'graphic_default.png'+' "'+'../vars'+'"')
         os.system('move '+'graphic_4265.png'+' "'+'../vars'+'"')
         
         # Notify the user of successful installation
