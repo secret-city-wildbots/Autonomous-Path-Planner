@@ -8,10 +8,9 @@ import matplotlib.pyplot as plt # Matplotlib plotting functionality
 from matplotlib.patches import Patch # graphics object
 import numpy as np # Numpy toolbox
 import os # access to Windows OS
-from PIL import ImageTk,Image # TkInter-integrated image display functionality 
+import pandas # data handling toolbox
 import sys # access to Windows OS
 import tkinter as tk # TkInter UI backbone
-import xlwt # Excel write functionality
 
 # Load remaining user modules
 import GeneralSupportFunctions as gensup # general support functions
@@ -434,7 +433,7 @@ def definePath(path,file_I):
     global flag_risingEdge
     flag_risingEdge = False
     global add_state
-    add_state = 0
+    add_state = 2 # intialize in this state to display a loaded path
     
     # Watch for window close event
     def actionWindowClose(evt):
@@ -533,10 +532,22 @@ def definePath(path,file_I):
         
         # Ask the user if they would like to save the path
         filename = gensup.popupTextEntry('name the path or leave blank to not save')
-    
-    
-
-
-
-
-#-----------------------------------------------------------------------------
+        
+        if(filename!=''):
+            
+            # Save the .csv file
+            nComp = max(0,path.numSmoothPoints()-path.numWayPoints())
+            df = pandas.DataFrame(data={"Distance (in)": path.smooths_d,
+                                        "Time (s)": path.smooths_t,
+                                        "X (in)": path.smooths_x,
+                                        "Y (in)": path.smooths_y,
+                                        "Velocity (in/s)": path.smooths_v,
+                                        "Orientation (deg)": path.smooths_o,
+                                        "Way X (in)": path.ways_x + nComp*[''],
+                                        "Way Y (in)": path.ways_y + nComp*[''],
+                                        "Way Velocity (in/s)": path.ways_v + nComp*[''],
+                                        "Way Orientation (deg)": path.ways_o + nComp*['']})
+            df.to_csv("../robot paths/%s.csv" %(filename), sep=',',index=False)
+            
+            # Save an image of the path planning figure
+            h_fig.savefig('../robot paths/%s.jpg' %(filename))

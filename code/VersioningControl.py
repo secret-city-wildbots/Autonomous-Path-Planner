@@ -42,6 +42,10 @@ def install():
         # Create always-local directories
         try: os.mkdir(dirPvars)
         except: pass
+        try: os.mkdir('../robot paths/')
+        except: pass
+        try: os.mkdir('../robot models/')
+        except: pass
     
         # Save the Operating System information
         np.save(dirPvars+'ostype.npy',ostype)
