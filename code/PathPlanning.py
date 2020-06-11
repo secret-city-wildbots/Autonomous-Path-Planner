@@ -38,24 +38,14 @@ guiFontType_uniform = h_npz_settings['guiFontType_uniform']
 
 #-----------------------------------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def generatePath(path):
+    """
+    Generates a smooth path based on a set of waypoints
+    Args:
+        path: robot path 
+    Returns:
+        path: the updated robot path
+    """
     
     # Extract information from the path
     ways_x = path.ways_x
@@ -319,37 +309,19 @@ def generatePath(path):
     # Update the path
     path.updateSmoothPath(ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth)
     
-    # Report the total path travel time
-    print('\nTime to travel the path: %0.2fs' %(path.total_t))
-
     return path
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #-----------------------------------------------------------------------------
 
 def popupPtData(path,x_prior,y_prior):
     """
-    ***
+    Creates a pop-up window that allows a user to create or edit a waypoint
+    Args:
+        path: robot path 
+        x_prior: (pixels) the x coordinate of the user's mouse click
+        y_prior: (pixels) the y coordinate of the user's mouse click
+    Returns:
+        path: the updated robot path
     """
     
     # Configure waypoint selection
@@ -417,7 +389,9 @@ def popupPtData(path,x_prior,y_prior):
     for i in range(0,len(fieldNames),1):
         [title,field] = gensup.easyTextField(popwindow,windW,fieldNames[i],str(defaults[i]))
         textFields.append({'title': title, 'field': field})
-    buttonSave = tk.Button(popwindow,text='Apply',fg=guiColor_black,bg=guiColor_hotgreen,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.04*windW),command=actionSave)
+    if(way_index==-1): buttonName = 'Create'
+    else: buttonName = 'Edit'
+    buttonSave = tk.Button(popwindow,text=buttonName,fg=guiColor_black,bg=guiColor_hotgreen,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.04*windW),command=actionSave)
     popwindow.bind('<Return>',actionSave)
     buttonDelete = tk.Button(popwindow,text='Delete',fg=guiColor_black,bg=guiColor_hotyellow,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.04*windW),command=actionDelete)
     
@@ -502,19 +476,10 @@ def definePath(path,file_I):
     plt.connect('button_press_event',mouseClick)
     plt.connect('button_release_event',mouseUnClick)
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
     # Blocking loop
     h_ways = None
     h_smooths = None
-    h_oris = None
+    hs_ori = []
     while(flag_abort==False):
         plt.pause(0.1)
         if(add_state==2):
@@ -523,7 +488,8 @@ def definePath(path,file_I):
             try: 
                 h_ways.remove()
                 h_smooths.remove()
-                h_oris.remove()
+                for h in hs_ori: h[0].remove()
+                hs_ori = []
             except: pass
         
             if(path.numWayPoints()>0):
@@ -538,8 +504,9 @@ def definePath(path,file_I):
                 path = generatePath(path)
                 
                 # Display the path metrics
-                #***
-            
+                details = 'start at (%0.2f in, %0.2f in, %0.0f°) predicted travel time: %0.2f s' %(path.smooths_x[0],path.smooths_y[0],path.smooths_o[0],path.total_t)
+                plt.xlabel('X: Down Field\n%s' %(details))
+                
                 # Display the smooth path
                 ptColors = []
                 for i in range(0,path.numSmoothPoints(),1):
@@ -548,31 +515,24 @@ def definePath(path,file_I):
                 h_smooths = ax.scatter(path.scale_pi*np.array(path.smooths_x),
                                        (path.field_y_pixels)*np.ones((len(path.smooths_y)),float) - path.scale_pi*np.array(path.smooths_y),
                                        color=np.array(ptColors),marker='.',s=200)
-                    
-                    
-            
+                
                 # Display the orientation overlays
-                ori_x = []
-                ori_y = []
                 for i in range(0,path.numSmoothPoints(),1):
                     xa = path.smooths_x[i]*path.scale_pi
                     ya = path.field_y_pixels-(path.smooths_y[i]*path.scale_pi)
                     oa = np.pi*path.smooths_o[i]/180.0
                     xb = xa + (path.step_size*path.scale_pi)*np.cos(oa)
                     yb = ya - (path.step_size*path.scale_pi)*np.sin(oa)
-                    ori_x.append([xa,xb])
-                    ori_y.append([ya,yb])
-                h_oris = ax.plot(np.array(ori_x),np.array(ori_y),color='k')
-            
-            
-            
-            
-            
-            
-            
+                    hs_ori.append(plt.plot(np.array([xa,xb]),np.array([ya,yb]),color=np.array(ptColors[i])))
             
             # Reset
             add_state = 0 
+            
+            
+    if(path.numWayPoints()>1):
+        
+        # Ask the user if they would like to save the path
+        filename = gensup.popupTextEntry('name the path or leave blank to not save')
     
     
 

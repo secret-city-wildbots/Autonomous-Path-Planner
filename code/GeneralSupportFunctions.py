@@ -1,4 +1,4 @@
-# Date: 2020-06-09
+# Date: 2020-06-11
 # Description: general support functions
 #-----------------------------------------------------------------------------
 
@@ -25,6 +25,7 @@ try:
     guiColor_offwhite = h_npz_settings['guiColor_offwhite']
     guiColor_darkgreen = h_npz_settings['guiColor_darkgreen']
     guiColor_cherryred = h_npz_settings['guiColor_cherryred']
+    guiColor_hotpink = h_npz_settings['guiColor_hotpink']
     guiFontSize_large = h_npz_settings['guiFontSize_large']
     guiFontSize_small = h_npz_settings['guiFontSize_small']
     guiFontType_normal = h_npz_settings['guiFontType_normal']
@@ -458,7 +459,7 @@ def popupTextEntry(titletext):
         entrywindow.destroy()
     
     # Configure the widget's window
-    entrywindow = tk.Tk()
+    entrywindow = tk.Toplevel()
     entrywindow.title(str(softwareName))
     windW = 400
     windH = 125
@@ -473,13 +474,13 @@ def popupTextEntry(titletext):
     entrywindow.protocol('WM_DELETE_WINDOW',actionClose)
     
     # Set up the title
-    title = tk.Label(entrywindow,text=titletext,fg=guiColor_black,bg=guiColor_offwhite,font=(guiFontType_normal,guiFontSize_large),height=1,width=len(titletext)+1)
+    title = tk.Label(entrywindow,text=titletext,fg=guiColor_white,bg=guiColor_offwhite,font=(guiFontType_normal,guiFontSize_large),height=1,width=len(titletext)+1)
     
     # Set up GUI elements
     input0_var = tk.StringVar(entrywindow)
     input0_var.set('')
-    entry0 = tk.Entry(entrywindow,textvariable=input0_var,fg=guiColor_black,bg=guiColor_white,font=(guiFontType_normal,guiFontSize_large),width=int(0.07*windW))
-    buttonApply = tk.Button(entrywindow,text='Apply',fg=guiColor_white,bg=guiColor_darkgreen,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.02*windW),command=actionClose)
+    entry0 = tk.Entry(entrywindow,textvariable=input0_var,fg=guiColor_offwhite,bg=guiColor_white,font=(guiFontType_normal,guiFontSize_large),width=int(0.07*windW))
+    buttonApply = tk.Button(entrywindow,text='Apply',fg=guiColor_black,bg=guiColor_hotpink,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.02*windW),command=actionClose)
     
     # Configure and place the gui elements
     title.pack(fill=tk.X)

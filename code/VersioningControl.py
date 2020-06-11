@@ -1,4 +1,4 @@
-# Date: 2020-06-09
+# Date: 2020-06-11
 # Description: auto-generates the readme.txt file and handle software upgrades
 # and installation
 #-----------------------------------------------------------------------------
@@ -39,12 +39,12 @@ def install():
         if(userInput): ostype = 'Linux'
         else: ostype = 'Windows-Mac'
         
-        # Save the Operating System information
-        np.save(dirPvars+'ostype.npy',ostype)
-        
         # Create always-local directories
         try: os.mkdir(dirPvars)
         except: pass
+    
+        # Save the Operating System information
+        np.save(dirPvars+'ostype.npy',ostype)
             
         # Move supporting files to the correct folders
         os.system('move '+'graphic_4265.png'+' "'+'../vars'+'"')
