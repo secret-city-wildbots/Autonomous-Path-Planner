@@ -116,12 +116,110 @@ class Path():
     
     def __init__(self):
         
-        self.x_real = 12*52.4375 # (in) length of the field
-        self.y_real = 12*26.9375 # (in) width of the field
+        # Explicit settings
+        self.field_x_real = 12*52.4375 # (in) length of the field
+        self.field_y_real = 12*26.9375 # (in) width of the field
         self.v_max = 12*15.0 # (in/s) maximum robot velocity
         self.step_size = 1.0 # (in) path step size
         self.radius_min = 12.0 # (in) minimum robot turn radius
         self.radius_max = 100.0 # (in) maximum robot turn radius
+        
+        # Implicit settings
+        self.field_x_pixels = 1.0 # (pix) length of the field
+        self.field_y_pixels = 1.0 # (pix) width of the field
+        self.scale_pi = 1.0 # (pix/in)
+        
+        # Way points
+        self.ways_x = [] # (in) list of way point x positions
+        self.ways_y = [] # (in) list of way point y positions
+        self.ways_v = [] # (in/s) list of way point velocities
+        self.ways_o = [] # (deg) list of way point orientations
+        
+    def fieldScale(self,I):
+        
+        # Calculate the scaling conversion factors
+        self.field_x_pixels = I.shape[1]
+        self.field_y_pixels = I.shape[0]
+        self.scale_pi = self.field_x_pixels/self.field_x_real
+        
+    def configureWayPoint(self,x_prior,y_prior):
+        
+        # Convert the candidate points into inches for search
+        x_prior = x_prior/self.scale_pi # (in)
+        y_prior = (self.field_y_pixels-y_prior)/self.scale_pi # (in)
+        
+        # Check to see if this is a new or a pre-exisiting point
+        thresh_samePt = 5 # [in] if the selected point is closer than this, you will edit a previous point
+        flag_newPt = True
+        i = -1 # needed for first call
+        for i in range(0,len(self.ways_x),1):
+            d = np.sqrt(((self.ways_x[i]-x_prior)**2)+((self.ways_y[i]-y_prior)**2))
+            if(d<thresh_samePt):
+                flag_newPt = False
+                break
+        
+        if(flag_newPt):
+            
+            # Index for a new point
+            way_index = -1
+            
+            # Default values for a new point
+            x_init = np.round(x_prior,2) # (ft)
+            y_init = np.round(y_prior,2) # (ft)
+            v_init = 1.0
+            o_init = 0.0
+            
+        else:
+            
+            # Index for an existing point
+            way_index = i
+            
+            # Default values for a new point
+            x_init = np.round(self.ways_x[i],2) # (in)
+            y_init = np.round(self.ways_y[i],2) # (in)
+            v_init = (1/12)*self.ways_v[i]
+            o_init = self.ways_o[i]
+        
+        return x_init, y_init, v_init, o_init, way_index
+    
+    def addWayPoint(self,x,y,v,o,way_index):
+        
+        if(way_index==-1):
+            
+            # Add a new point to the list of way points
+            (self.ways_x).append(x)
+            (self.ways_y).append(y)
+            (self.ways_v).append(v)
+            (self.ways_o).append(o)
+            
+        else:
+            
+            # Edit an existing point
+            self.ways_x[way_index] = x
+            self.ways_y[way_index] = y
+            self.ways_v[way_index] = v
+            self.ways_o[way_index] = o
+        
+    def removeWayPoint(self,way_index):
+        
+        if(way_index==-1): 
+            
+            # Do not add a new point
+            pass
+        
+        else:
+            
+            # Remove an existing point
+            (self.ways_x).pop(way_index)
+            (self.ways_y).pop(way_index)
+            (self.ways_v).pop(way_index)
+            (self.ways_o).pop(way_index)
+            
+            
+            
+            
+    
+        
         
 # Instantiate the robot path
 path = Path()
@@ -188,8 +286,8 @@ def actionApplySettings(*args):
     
     # Check entries for errors
     flags = True
-    [x_real,flags] = gensup.safeTextEntry(flags,textFields[0]['field'],'float',vmin=0.0,vmax=100.0)
-    [y_real,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=0.0,vmax=100.0)
+    [field_x_real,flags] = gensup.safeTextEntry(flags,textFields[0]['field'],'float',vmin=0.0,vmax=100.0)
+    [field_y_real,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=0.0,vmax=100.0)
     [v_max,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=1.0,vmax=30.0)
     [step_size,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=1.0,vmax=100.0)
     [radius_min,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=1.0,vmax=1000.0)
@@ -197,8 +295,8 @@ def actionApplySettings(*args):
     
     # Save the error-free entries in the correct units
     if(flags):
-        path.x_real = 12.0*x_real
-        path.y_real = 12.0*y_real
+        path.field_x_real = 12.0*field_x_real
+        path.field_y_real = 12.0*field_y_real
         path.v_max = 12.0*v_max
         path.step_size =step_size
         path.radius_min = radius_min
@@ -212,19 +310,26 @@ def actionLoadField(*args):
     """
     
     # Ask the user to load a field map
-    path_I = filedialog.askopenfilename(initialdir='../field drawings/',title = 'Select a Field Drawing',filetypes=recognizedImageExtensions)
+    file_I = filedialog.askopenfilename(initialdir='../field drawings/',title = 'Select a Field Drawing',filetypes=recognizedImageExtensions)
     
     # Ask the user to load a previous path
     #***
     
-    print('yolo')
+    # Start the path planner
+    path.__init__()
+    lockMenus(['File'],True)
+    plan.definePath(path,file_I)
+    lockMenus(['File'],False)
+
+    
+    
     
 #-----------------------------------------------------------------------------
 
 # Open the GUI window
 guiwindow = tk.Tk()
 guiwindow.title(softwareName)
-windW = int(0.3*min(1080,minScrnDim)) # window width
+windW = int(0.25*min(1080,minScrnDim)) # window width
 windH = int(0.65*min(1080,minScrnDim)) # window height 
 guiwindow.geometry(str(windW)+'x'+str(windH))
 guiwindow.configure(background=guiColor_offwhite)
@@ -248,8 +353,8 @@ fieldNames = ['Field Length (ft)',
               'Step Size (in)',
               'Minimum Turn Radius (in)',
               'Maximum Turn Radius (in)']
-defaults = [path.x_real/12.0,
-            path.y_real/12.0,
+defaults = [path.field_x_real/12.0,
+            path.field_y_real/12.0,
             path.v_max/12.0,
             path.step_size,
             path.radius_min,

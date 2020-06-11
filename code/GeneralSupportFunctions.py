@@ -864,7 +864,7 @@ def smartRealImageDisplay(I,actualSize,titletext,**kwargs):
     except: xdigits = 0
     try: ydigits = len(str(actualSize[1]).split('.')[1]) 
     except: ydigits = 0
-    digits = max([xdigits,ydigits])
+    digits = min(2,max([xdigits,ydigits]))
     
     # Configure the tick marks and grid lines
     xticks_num = np.linspace(0,imageSize[0],numxticks+1)/scale[0]
