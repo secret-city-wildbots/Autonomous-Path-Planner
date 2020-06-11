@@ -5,9 +5,7 @@
 # Load external modules
 import cv2 # OpenCV
 import matplotlib.pyplot as plt # Matplotlib plotting functionality
-from matplotlib.patches import Patch # graphics object
 import numpy as np # Numpy toolbox
-import os # access to Windows OS
 import pandas # data handling toolbox
 import sys # access to Windows OS
 import tkinter as tk # TkInter UI backbone

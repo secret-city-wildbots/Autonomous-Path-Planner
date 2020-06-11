@@ -1,4 +1,4 @@
-# Date: 2020-06-09
+# Date: 2020-06-11
 # Description: a path planner for FRC 2020
 #-----------------------------------------------------------------------------
 
@@ -58,8 +58,10 @@ else: flag_upgraded = False
 
 # Load remaining external modules
 import cv2 # OpenCV
+import math # additional math functionality
 import matplotlib # Matplotlib module
 import matplotlib.pyplot as plt # Matplotlib plotting functionality
+import pandas # data handling toolbox
 import tkinter as tk # TkInter UI backbone
 from tkinter import filedialog # TkInter file browsers
 from tkinter import messagebox # TkInter popup windows
@@ -111,7 +113,7 @@ guiFontSize_small = int(np.ceil(guiFontSize_small*(guiScaling**1)))
 
 class Path(): 
     """
-    Data object for the current path
+    Data object defining a robot path
     """
     
     def __init__(self):
@@ -225,6 +227,30 @@ class Path():
             (self.ways_v).pop(way_index)
             (self.ways_o).pop(way_index)
             
+    def loadWayPoints(self,file_csv):
+        
+        try: 
+            
+            # Load the .csv file
+            df = pandas.read_csv(file_csv)
+            
+            # Parse the way point information
+            self.ways_x = list(df['Way X (in)'].values)
+            self.ways_y = list(df['Way Y (in)'].values)
+            self.ways_v = list(df['Way Velocity (in/s)'].values)
+            self.ways_o = list(df['Way Orientation (deg)'].values)
+            
+            # Remove dummy values saved in the .csv file
+            while(True):
+                if(not math.isnan(self.ways_x[-1])): break
+                else:
+                    self.ways_x.pop(-1)
+                    self.ways_y.pop(-1)
+                    self.ways_v.pop(-1)
+                    self.ways_o.pop(-1)
+            
+        except: pass
+            
     def numWayPoints(self):
         
         # Calculate the current number of way points
@@ -247,8 +273,6 @@ class Path():
         
         # Calculate the current number of smooth points
         return len(self.smooths_x)
-    
-        
         
 # Instantiate the robot path
 path = Path()
@@ -335,23 +359,23 @@ def actionApplySettings(*args):
 
 def actionLoadField(*args):
     """
-    ***
+    Loads the field map and allows the user to start planning a path
     """
+    
+    # Reinitialize the path
+    path.__init__()
     
     # Ask the user to load a field map
     file_I = filedialog.askopenfilename(initialdir='../field drawings/',title = 'Select a Field Drawing',filetypes=recognizedImageExtensions)
     
     # Ask the user to load a previous path
-    #***
+    file_csv = filedialog.askopenfilename(initialdir='../robot paths/',title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
+    path.loadWayPoints(file_csv)
     
     # Start the path planner
-    path.__init__()
     lockMenus(['File'],True)
     plan.definePath(path,file_I)
     lockMenus(['File'],False)
-
-    
-    
     
 #-----------------------------------------------------------------------------
 
