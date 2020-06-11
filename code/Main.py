@@ -135,6 +135,16 @@ class Path():
         self.ways_v = [] # (in/s) list of way point velocities
         self.ways_o = [] # (deg) list of way point orientations
         
+        # Smooth path
+        self.smooths_x = [] # (in) list of smooth x positions
+        self.smooths_y = [] # (in) list of smooth y positions
+        self.smooths_v = [] # (in/s) list of sooth velocities
+        self.smooths_o = [] # (deg) list of smooth orientations
+        self.smooths_d = [] # (in) list of smooth cumulative distance
+        self.total_d = 0.0 # (in) total distance along the path
+        self.smooths_t = [] # (in) lust of smooth cumulative time
+        self.total_t = 0.0 # (s) total path travel time
+        
     def fieldScale(self,I):
         
         # Calculate the scaling conversion factors
@@ -215,9 +225,28 @@ class Path():
             (self.ways_v).pop(way_index)
             (self.ways_o).pop(way_index)
             
+    def numWayPoints(self):
+        
+        # Calculate the current number of way points
+        return len(self.ways_x)
             
-            
-            
+
+    def updateSmoothPath(self,ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth):
+
+        # Update the smooth path
+        self.smooths_x = ptxs_smooth
+        self.smooths_y = ptys_smooth
+        self.smooths_v = vels_smooth
+        self.smooths_o = oris_smooth
+        self.smooths_d = dsts_smooth
+        self.total_d = dsts_smooth[-1]
+        self.smooths_t = tims_smooth
+        self.total_t = tims_smooth[-1]
+        
+    def numSmoothPoints(self):
+        
+        # Calculate the current number of smooth points
+        return len(self.smooths_x)
     
         
         
