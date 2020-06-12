@@ -3,7 +3,7 @@
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '0.0.1' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionNumber = '1.0.0' # breaking.major-feature-add.minor-feature-or-bug-fix
 versionType = 'beta' # options are "beta" or "release"
 print('Loading v%s...' %(versionNumber))
 
@@ -368,13 +368,16 @@ def actionLoadField(*args):
     # Ask the user to load a field map
     file_I = filedialog.askopenfilename(initialdir='../field drawings/',title = 'Select a Field Drawing',filetypes=recognizedImageExtensions)
     
+    # Ask the user to load a robot model
+    file_robot = filedialog.askopenfilename(initialdir='../robot models/',title = 'Select a Robot Model',filetypes=recognizedImageExtensions)
+    
     # Ask the user to load a previous path
     file_csv = filedialog.askopenfilename(initialdir='../robot paths/',title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
     path.loadWayPoints(file_csv)
     
     # Start the path planner
     lockMenus(['File'],True)
-    plan.definePath(path,file_I)
+    plan.definePath(path,file_I,file_robot)
     lockMenus(['File'],False)
     
 #-----------------------------------------------------------------------------

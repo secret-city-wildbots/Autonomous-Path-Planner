@@ -406,18 +406,116 @@ def popupPtData(path,x_prior,y_prior):
 
 #-----------------------------------------------------------------------------
 
-def definePath(path,file_I):
+def loadRobot(file_robot,scale_pi):
     """
-    ***
+    Loads the robot model
+    Args:
+        file_robot: file path to the robot model
+        scale_pi: (pix/in) unit conversion factor for the field
+    Returns:
+        I_robot: image of the robot model
+    """
+
+    # Load the robot model
+    I_robot = cv2.imread(file_robot,cv2.IMREAD_COLOR)
+    I_robot = gensup.convertColorSpace(I_robot) # fix image coloring
+
+    # Recover the robot dimensions
+    filename = file_robot.split('/')[-1]
+    filename = filename.split('.')[0]
+    dimensions = filename.split('_')
+    robot_x = float(dimensions[1].replace('-','.')) # (in) robot length
+    robot_y = float(dimensions[2].replace('-','.')) # (in) robot width
+    robot_x = int(np.round(robot_x*scale_pi,0)) # (pix)
+    robot_y = int(np.round(robot_y*scale_pi,0)) # (pix)
+
+    # Resize the robot model
+    I_robot = cv2.resize(I_robot,(robot_x,robot_y)) # resize the image
+    
+    # Pad the robot model for later rotation
+    pad_v = I_robot.shape[0]//2
+    pad_h = I_robot.shape[1]//2
+    I_robot = cv2.copyMakeBorder(I_robot,pad_v,pad_v,pad_h,pad_h,cv2.BORDER_CONSTANT,value=[255,255,255])
+
+    return I_robot
+
+#-----------------------------------------------------------------------------
+
+def overlayRobot(I_in,I_robot_in,scale_pi,field_y_pixels,center_x,center_y,theta):
+    """
+    Overlays the robot model on top of the field image
+    Args:
+        I_in: image of the field map
+        I_robot_in: image of the robot model
+        scale_pi: (pix/in) unit conversion factor for the field
+        field_y_pixels: (pix) width of the field
+        center_x: (in) x coordinate of the robot center
+        center_y: (in) y coordinate of the robot center
+        theta: (deg) rotation angle for the robot
+    Returns:
+        I: fused image of the field map and the robot model
+    """
+    
+    # Handle OpenCV ghost assignments
+    I = np.copy(I_in)
+    I_robot = np.copy(I_robot_in)
+    
+    # Convert the coordinates into pixels
+    center_x = scale_pi*center_x
+    center_y = field_y_pixels - scale_pi*center_y
+    tx = center_x - 0.5*I_robot.shape[1] # shift for the center of the robot
+    ty = center_y - 0.5*I_robot.shape[0] # shift for the center of the robot
+    tx = int(np.round(tx,0))
+    ty = int(np.round(ty,0))
+    
+    # Rotate the robot model about its center
+    M_rot = cv2.getRotationMatrix2D((I_robot.shape[1]//2,I_robot.shape[0]//2),theta,1.0)
+    I_robot = cv2.warpAffine(I_robot,M_rot,(I.shape[1],I.shape[0]))
+    
+    # Translate the robot model
+    M_trans = np.float32([[1,0,tx],[0,1,ty]])
+    I_robot = cv2.warpAffine(I_robot,M_trans,(I.shape[1],I.shape[0]))
+    
+    # Find the background pixel locations and make them transparent in the robot image
+    locs_background = (I_robot[:,:,0]>=225) & (I_robot[:,:,1]>=225) & (I_robot[:,:,2]>=225)
+    I_robot[locs_background,0] = 0
+    I_robot[locs_background,1] = 0
+    I_robot[locs_background,2] = 0
+    
+    # Find the foreground pixel locations and make them transparent in the field image
+    locs_foreground = (I_robot[:,:,0]>=30) | (I_robot[:,:,1]>=30) | (I_robot[:,:,2]>=30)
+    I[locs_foreground,0] = 0
+    I[locs_foreground,1] = 0
+    I[locs_foreground,2] = 0
+    
+    # Fuse the two images
+    I = I + I_robot
+    
+    return I
+
+#-----------------------------------------------------------------------------
+
+def definePath(path,file_I,file_robot):
+    """
+    Allows the user to define an autonomous path
+    Args:
+        path: robot path
+        file_I: file path to the field map image
+        file_robot: file path to the robot model
+    Returns:
+        None
     """
     
     # Load the field image
-    I = cv2.imread(file_I,cv2.IMREAD_UNCHANGED) # load the selected image 
+    I = cv2.imread(file_I,cv2.IMREAD_COLOR) # load the selected image 
     I = cv2.resize(I,(int(dispRes*path.field_x_real),int(dispRes*path.field_y_real))) # resize the image
     I = gensup.convertColorSpace(I) # fix image coloring
     
     # Calculate the scaling 
     path.fieldScale(I)
+    
+    # Load the robot model
+    I_robot = loadRobot(file_robot,path.scale_pi)
     
     # Display the field image
     [h_fig,h_im,ax,_] = gensup.smartRealImageDisplay(I,[path.field_x_real/12.0,path.field_y_real/12.0],'Field Map',
@@ -483,11 +581,28 @@ def definePath(path,file_I):
             
             # Remove the previous plots
             try: 
+                
                 h_ways.remove()
                 h_smooths.remove()
                 for h in hs_ori: h[0].remove()
                 hs_ori = []
             except: pass
+        
+            if(path.numWayPoints()>0):
+        
+                # Add the robot model at the starting waypoint
+                I_fused = overlayRobot(I,I_robot,path.scale_pi,path.field_y_pixels,path.ways_x[0],path.ways_y[0],path.ways_o[0])
+                
+            if(path.numWayPoints()>1):
+        
+                # Add the robot model at the ending waypoint
+                I_fused = overlayRobot(I_fused,I_robot,path.scale_pi,path.field_y_pixels,path.ways_x[-1],path.ways_y[-1],path.ways_o[-1])
+                
+            if(path.numWayPoints()>0):    
+                
+                # Display the robot at the starting and end points
+                h_im.remove()
+                h_im = ax.imshow(I_fused,vmin=0,vmax=255,interpolation='none',extent=[0,I.shape[1],I.shape[0],0])  
         
             if(path.numWayPoints()>0):
             
@@ -501,8 +616,9 @@ def definePath(path,file_I):
                 path = generatePath(path)
                 
                 # Display the path metrics
-                details = 'start at (%0.2f in, %0.2f in, %0.0f°) predicted travel time: %0.2f s' %(path.smooths_x[0],path.smooths_y[0],path.smooths_o[0],path.total_t)
-                plt.xlabel('X: Down Field\n%s' %(details))
+                details_start = 'start at (%0.2f in, %0.2f in, %0.0f°)' %(path.smooths_x[0],path.smooths_y[0],path.smooths_o[0])
+                details_end = 'end at (%0.2f in, %0.2f in, %0.0f°) predicted travel time: %0.2f s' %(path.smooths_x[-1],path.smooths_y[-1],path.smooths_o[-1],path.total_t)
+                plt.xlabel('X: Down Field\n%s\n%s' %(details_start,details_end))
                 
                 # Display the smooth path
                 ptColors = []
@@ -524,7 +640,6 @@ def definePath(path,file_I):
             
             # Reset
             add_state = 0 
-            
             
     if(path.numWayPoints()>1):
         
