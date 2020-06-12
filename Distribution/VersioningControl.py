@@ -1,4 +1,4 @@
-# Date: 2020-06-09
+# Date: 2020-06-11
 # Description: auto-generates the readme.txt file and handle software upgrades
 # and installation
 #-----------------------------------------------------------------------------
@@ -39,18 +39,23 @@ def install():
         if(userInput): ostype = 'Linux'
         else: ostype = 'Windows-Mac'
         
-        # Save the Operating System information
-        np.save(dirPvars+'ostype.npy',ostype)
-        
         # Create always-local directories
         try: os.mkdir(dirPvars)
         except: pass
-        try: os.mkdir('../workspaces')
+        try: os.mkdir('../field drawings/')
         except: pass
+        try: os.mkdir('../robot paths/')
+        except: pass
+        try: os.mkdir('../robot models/')
+        except: pass
+    
+        # Save the Operating System information
+        np.save(dirPvars+'ostype.npy',ostype)
             
         # Move supporting files to the correct folders
-        os.system('move '+'graphic_default.png'+' "'+'../vars'+'"')
+        os.system('move '+'settings.npz'+' "'+'../vars'+'"')
         os.system('move '+'graphic_4265.png'+' "'+'../vars'+'"')
+        
         
         # Notify the user of successful installation
         instructions = 'Next Steps:\n'
@@ -134,7 +139,7 @@ Quick Help
 
 1. File
 1a. Load Field Map
-***
+Allows the user to load the field map and robot model and then plan an auto path.
 
 1b. Quit
 Cleanly exits the software. This is functionally identical to selecting the close

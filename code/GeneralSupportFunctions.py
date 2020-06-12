@@ -307,11 +307,12 @@ def easyDropdown(guiwindow,titletext,options):
 
 #-----------------------------------------------------------------------------
 
-def popupTextEntry(titletext):
+def popupTextEntry(titletext,default):
     """
     Opens a single text entry box
     Args:
         titletext: short string to provide the user with instructions
+        default: default text entry
     Returns:
         userChoice: the user's entry as a string
     Saves:
@@ -320,12 +321,16 @@ def popupTextEntry(titletext):
     
     # Define button callbacks
     global userEntry
+    userEntry = ''
     def actionClose(*args):
-        global userEntry
-        userEntry = entry0.get()
         entrywindow.unbind('<Return>')
         entrywindow.quit()
         entrywindow.destroy()
+        
+    def actionApply(*args):
+        global userEntry
+        userEntry = entry0.get()
+        actionClose()
     
     # Configure the widget's window
     entrywindow = tk.Toplevel()
@@ -349,7 +354,8 @@ def popupTextEntry(titletext):
     input0_var = tk.StringVar(entrywindow)
     input0_var.set('')
     entry0 = tk.Entry(entrywindow,textvariable=input0_var,fg=guiColor_offwhite,bg=guiColor_white,font=(guiFontType_normal,guiFontSize_large),width=int(0.07*windW))
-    buttonApply = tk.Button(entrywindow,text='Apply',fg=guiColor_black,bg=guiColor_hotpink,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.02*windW),command=actionClose)
+    entry0.insert(0,default)
+    buttonApply = tk.Button(entrywindow,text='Apply',fg=guiColor_black,bg=guiColor_hotpink,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.02*windW),command=actionApply)
     
     # Configure and place the gui elements
     title.pack(fill=tk.X)
@@ -638,7 +644,7 @@ def smartRealImageDisplay(I,actualSize,titletext,**kwargs):
     if(flag_grid):
         ax.set_xticks(xticklocs,minor=False)
         ax.set_yticks(yticklocs,minor=False)
-        plt.grid(b=None,which='major',axis='both',color=np.array([0.8,0.8,0.8]))    
+        # plt.grid(b=None,which='major',axis='both',color=np.array([0.8,0.8,0.8]))    
     
     # Label the axes
     if(flag_grid):

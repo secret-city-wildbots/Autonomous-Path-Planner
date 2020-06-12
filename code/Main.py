@@ -130,6 +130,7 @@ class Path():
         self.field_x_pixels = 1.0 # (pix) length of the field
         self.field_y_pixels = 1.0 # (pix) width of the field
         self.scale_pi = 1.0 # (pix/in)
+        self.loaded_filename = '' # the name of the loaded path
         
         # Way points
         self.ways_x = [] # (in) list of way point x positions
@@ -248,6 +249,11 @@ class Path():
                     self.ways_y.pop(-1)
                     self.ways_v.pop(-1)
                     self.ways_o.pop(-1)
+                    
+            # Record the filename
+            filename = file_csv.split('/')[-1]
+            filename = filename.split('.')[0]
+            self.loaded_filename = filename
             
         except: pass
             

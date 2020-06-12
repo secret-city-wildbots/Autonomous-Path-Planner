@@ -416,26 +416,33 @@ def loadRobot(file_robot,scale_pi):
         I_robot: image of the robot model
     """
 
-    # Load the robot model
-    I_robot = cv2.imread(file_robot,cv2.IMREAD_COLOR)
-    I_robot = gensup.convertColorSpace(I_robot) # fix image coloring
+    try:
 
-    # Recover the robot dimensions
-    filename = file_robot.split('/')[-1]
-    filename = filename.split('.')[0]
-    dimensions = filename.split('_')
-    robot_x = float(dimensions[1].replace('-','.')) # (in) robot length
-    robot_y = float(dimensions[2].replace('-','.')) # (in) robot width
-    robot_x = int(np.round(robot_x*scale_pi,0)) # (pix)
-    robot_y = int(np.round(robot_y*scale_pi,0)) # (pix)
-
-    # Resize the robot model
-    I_robot = cv2.resize(I_robot,(robot_x,robot_y)) # resize the image
+        # Load the robot model
+        I_robot = cv2.imread(file_robot,cv2.IMREAD_COLOR)
+        I_robot = gensup.convertColorSpace(I_robot) # fix image coloring
     
-    # Pad the robot model for later rotation
-    pad_v = I_robot.shape[0]//2
-    pad_h = I_robot.shape[1]//2
-    I_robot = cv2.copyMakeBorder(I_robot,pad_v,pad_v,pad_h,pad_h,cv2.BORDER_CONSTANT,value=[255,255,255])
+        # Recover the robot dimensions
+        filename = file_robot.split('/')[-1]
+        filename = filename.split('.')[0]
+        dimensions = filename.split('_')
+        robot_x = float(dimensions[1].replace('-','.')) # (in) robot length
+        robot_y = float(dimensions[2].replace('-','.')) # (in) robot width
+        robot_x = int(np.round(robot_x*scale_pi,0)) # (pix)
+        robot_y = int(np.round(robot_y*scale_pi,0)) # (pix)
+    
+        # Resize the robot model
+        I_robot = cv2.resize(I_robot,(robot_x,robot_y)) # resize the image
+        
+        # Pad the robot model for later rotation
+        pad_v = I_robot.shape[0]//2
+        pad_h = I_robot.shape[1]//2
+        I_robot = cv2.copyMakeBorder(I_robot,pad_v,pad_v,pad_h,pad_h,cv2.BORDER_CONSTANT,value=[255,255,255])
+        
+    except:
+        
+        # default robot model
+        I_robot = 255*np.ones((10,10,3),np.uint8)
 
     return I_robot
 
@@ -644,7 +651,7 @@ def definePath(path,file_I,file_robot):
     if(path.numWayPoints()>1):
         
         # Ask the user if they would like to save the path
-        filename = gensup.popupTextEntry('name the path or leave blank to not save')
+        filename = gensup.popupTextEntry('name the path or leave blank to not save',path.loaded_filename)
         
         if(filename!=''):
             

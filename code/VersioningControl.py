@@ -42,6 +42,8 @@ def install():
         # Create always-local directories
         try: os.mkdir(dirPvars)
         except: pass
+        try: os.mkdir('../field drawings/')
+        except: pass
         try: os.mkdir('../robot paths/')
         except: pass
         try: os.mkdir('../robot models/')
@@ -51,7 +53,9 @@ def install():
         np.save(dirPvars+'ostype.npy',ostype)
             
         # Move supporting files to the correct folders
+        os.system('move '+'settings.npz'+' "'+'../vars'+'"')
         os.system('move '+'graphic_4265.png'+' "'+'../vars'+'"')
+        
         
         # Notify the user of successful installation
         instructions = 'Next Steps:\n'
