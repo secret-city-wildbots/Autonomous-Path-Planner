@@ -149,6 +149,9 @@ button in the upper-right corner.
 Release Notes
 -------------------------------------------------------------------------------------
 
+v***
+-Fixes a bug with the <Enter> key when saving a path.
+
 v1.0.0
 -This is the first release version, all previous versions existed only in beta.
 

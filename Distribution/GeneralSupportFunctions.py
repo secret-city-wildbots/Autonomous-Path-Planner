@@ -361,7 +361,7 @@ def popupTextEntry(titletext,default):
     title.pack(fill=tk.X)
     entry0.pack(pady=5)
     buttonApply.pack(pady=5)
-    entrywindow.bind('<Return>',actionClose)
+    entrywindow.bind('<Return>',actionApply)
     entry0.lift() 
     entrywindow.focus_set()
     entry0.focus_set()
