@@ -1,9 +1,9 @@
-# Date: 2020-06-11
+# Date: 2020-10-01
 # Description: a path planner for FRC 2020
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '1.0.0' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionNumber = '1.2.0' # breaking.major-feature-add.minor-feature-or-bug-fix
 versionType = 'beta' # options are "beta" or "release"
 print('Loading v%s...' %(versionNumber))
 
@@ -122,9 +122,15 @@ class Path():
         self.field_x_real = 12*52.4375 # (in) length of the field
         self.field_y_real = 12*26.9375 # (in) width of the field
         self.v_max = 12*15.0 # (in/s) maximum robot velocity
+        self.a_max = 12*3.0 # (in/s^2) maximum robot acceleration
         self.step_size = 1.0 # (in) path step size
         self.radius_min = 12.0 # (in) minimum robot turn radius
         self.radius_max = 100.0 # (in) maximum robot turn radius
+        
+        # Reset the path
+        self.reset()
+        
+    def reset(self):
         
         # Implicit settings
         self.field_x_pixels = 1.0 # (pix) length of the field
@@ -351,6 +357,7 @@ def actionApplySettings(*args):
     [step_size,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=1.0,vmax=100.0)
     [radius_min,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=1.0,vmax=1000.0)
     [radius_max,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=1.1*radius_min,vmax=1000.0)
+    [a_max,flags] = gensup.safeTextEntry(flags,textFields[6]['field'],'float',vmin=0.5,vmax=100.0)
     
     # Save the error-free entries in the correct units
     if(flags):
@@ -360,7 +367,8 @@ def actionApplySettings(*args):
         path.step_size =step_size
         path.radius_min = radius_min
         path.radius_max = radius_max
-    
+        path.a_max = 12.0*a_max
+        
 #-----------------------------------------------------------------------------
 
 def actionLoadField(*args):
@@ -369,7 +377,7 @@ def actionLoadField(*args):
     """
     
     # Reinitialize the path
-    path.__init__()
+    path.reset()
     
     # Ask the user to load a field map
     file_I = filedialog.askopenfilename(initialdir='../field drawings/',title = 'Select a Field Drawing',filetypes=recognizedImageExtensions)
@@ -391,8 +399,8 @@ def actionLoadField(*args):
 # Open the GUI window
 guiwindow = tk.Tk()
 guiwindow.title(softwareName)
-windW = int(0.25*min(1080,minScrnDim)) # window width
-windH = int(0.65*min(1080,minScrnDim)) # window height 
+windW = int(0.30*min(1080,minScrnDim)) # window width
+windH = int(0.75*min(1080,minScrnDim)) # window height 
 guiwindow.geometry(str(windW)+'x'+str(windH))
 guiwindow.configure(background=guiColor_offwhite)
 guiwindow.resizable(width=False, height=False)
@@ -404,9 +412,9 @@ guiwindow.geometry("+{}+{}".format(int(0.5*(guiwindow.winfo_screenwidth()-windW)
 guiwindow.protocol('WM_DELETE_WINDOW',actionQuit)
 
 # Set up the logos
-logo = tk.Canvas(guiwindow,width=int(466*guiScaling),height=int(232*guiScaling),highlightthickness=0,background=guiColor_offwhite)  
+logo = tk.Canvas(guiwindow,width=int(564*guiScaling),height=int(280*guiScaling),highlightthickness=0,background=guiColor_offwhite)  
 I_logo = gensup.convertColorSpace(cv2.imread(dirPvars+'graphic_4265.png')) # load the default image
-gensup.easyTkImageDisplay(guiwindow,logo,I_logo,forceSize=[int(466*guiScaling),int(232*guiScaling)])
+gensup.easyTkImageDisplay(guiwindow,logo,I_logo,forceSize=[int(564*guiScaling),int(280*guiScaling)])
 
 # Define the settings fields
 fieldNames = ['Field Length (ft)',
@@ -414,13 +422,15 @@ fieldNames = ['Field Length (ft)',
               'Maximum Robot Velocity (ft/s)',
               'Step Size (in)',
               'Minimum Turn Radius (in)',
-              'Maximum Turn Radius (in)']
+              'Maximum Turn Radius (in)',
+              'Maximum Robot Acceleration (ft/s²)']
 defaults = [path.field_x_real/12.0,
             path.field_y_real/12.0,
             path.v_max/12.0,
             path.step_size,
             path.radius_min,
-            path.radius_max]
+            path.radius_max,
+            path.a_max/12.0]
 
 # Set up the settings elements
 textFields = []

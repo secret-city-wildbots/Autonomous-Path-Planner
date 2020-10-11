@@ -1,4 +1,4 @@
-# Date: 2020-06-11
+# Date: 2020-10-11
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
@@ -50,6 +50,28 @@ def generatePath(path):
     ways_v = path.ways_v
     ways_o = path.ways_o
     
+    # Acceleration limit between the way points
+    flag_toofast = True
+    while(flag_toofast):
+        for i in range(0,path.numWayPoints()-1,1):
+           
+            # Calculate the requested delta v
+            max_s = np.sqrt(((ways_y[i+1]-ways_y[i])**2)+((ways_x[i+1]-ways_x[i])**2)) 
+            delta_v_req = ways_v[i+1]-ways_v[i]
+            
+            # Calculate the max permitted delta v
+            delta_v_max = -ways_v[i] + np.sqrt((ways_v[i]**2)+2*path.a_max*max_s)
+           
+            # Force replacement of the waypoint target speeds
+            if(delta_v_req>0):
+                if(delta_v_req>delta_v_max):
+                    ways_v[i+1] = delta_v_max + ways_v[i]
+                    path.ways_v[i+1] = ways_v[i+1]
+                    flag_toofast = True
+                    break
+                else: flag_toofast = False
+            else: flag_toofast = False
+    
     # Insert dense points along a piece-wise linear interpolation
     vels_segs = [] # [in/s] the dense v points listed per segment
     oris_segs = [] # [degrees] the dense orientation points list per segment
@@ -91,7 +113,6 @@ def generatePath(path):
         # Step the inserted points along the path
         total_s = 0 # tracks total travel along the current path segment
         while((total_s+path.step_size)<max_s):
-            
             ptxs_seg.append(ptxs_seg[-1]+delta_x)
             ptys_seg.append(ptys_seg[-1]+delta_y)
             vels_seg.append(vels_seg[-1]+delta_v)
