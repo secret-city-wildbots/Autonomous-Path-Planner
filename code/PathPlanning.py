@@ -1,4 +1,4 @@
-# Date: 2020-10-11
+# Date: 2021-01-31
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
@@ -331,6 +331,246 @@ def generatePath(path):
 
 #-----------------------------------------------------------------------------
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def generatePath2(path):
+    """
+    Generates a smooth path based on a set of waypoints
+    Args:
+        path: robot path 
+    Returns:
+        path: the updated robot path
+    """
+    
+
+        
+        
+        
+        
+        
+        
+        
+    r = 12 #***
+    
+    # Characterize the turns
+    ways_dt = [None]
+    for i in range(1,path.numWayPoints()-1,1):
+        
+        print('')
+        
+        # Get the coordinates of the relevant waypoints
+        ax = path.ways_x[i-1]
+        ay = path.ways_y[i-1]
+        bx = path.ways_x[i]
+        by = path.ways_y[i]
+        cx = path.ways_x[i+1]
+        cy = path.ways_y[i+1]
+        
+        # Calculate the angle between the segments
+        dotproduct = (ax-bx)*(cx-bx)+(ay-by)*(cy-by)
+        mag_ba = np.sqrt(((ax-bx)**2)+((ay-by)**2))
+        mag_bc = np.sqrt(((cx-bx)**2)+((cy-by)**2))
+        theta = np.arccos(dotproduct/(mag_ba*mag_bc))
+        theta_half = theta/2
+        print('theta: ',180*theta/np.pi)
+        
+        # Calculate the angle from the x-axis to the line bisecting the segments
+        alpha_bc = np.arctan2((cy-by),(cx-bx))
+        crossproduct = ax*by-ay*bx
+        if(crossproduct>=0): gamma = alpha_bc+theta_half
+        else: gamma = alpha_bc-theta_half
+        print('gamma: ',180*gamma/np.pi)
+        
+        # Calculate transition distance along the linear segments
+        dt = r/np.tan(theta_half)
+        ways_dt.append(dt)
+        
+    # The last waypoint never has any smoothing
+    ways_dt.append(None)
+        
+        
+        
+        
+        
+        
+            
+        # #***
+        # cx = bx+r*np.cos(gamma)
+        # cy = by+r*np.sin(gamma)
+        # ptxs_smooth_linear.append(cx)
+        # ptys_smooth_linear.append(cy)
+        # vels_smooth.append(4*12*i)
+        # dsts_smooth.append(1)
+        # tims_smooth.append(1)
+        
+        
+        
+    vels_smooth = [0] #***   
+        
+    # Generate the dense position points
+    ptxs_smooth = [path.ways_x[0]]
+    ptys_smooth = [path.ways_y[0]]
+    flag_arc = False
+    for i in range(0,path.numWayPoints()-1,1):
+        
+        # Get the coordinates of the relevant waypoints
+        ax = path.ways_x[i]
+        ay = path.ways_y[i]
+        bx = path.ways_x[i+1]
+        by = path.ways_y[i+1]
+        dt = ways_dt[i+1]
+        
+        
+        flag_arc = False #***
+        
+        
+        # Check that the waypoints aren't closer than the step size
+        dw = np.sqrt(((bx-ax)**2)+((by-ay)**2))
+        if(dw>path.step_size):
+            while(True):
+                
+                # if(not flag_arc):
+                
+                # Calculate the next point
+                alpha_ab = np.arctan2((by-ay),(bx-ax))
+                dx = path.step_size*np.cos(alpha_ab)
+                dy = path.step_size*np.sin(alpha_ab)
+                nx = ptxs_smooth[-1]+dx
+                ny = ptys_smooth[-1]+dy
+                
+                # Calculate remaining linear distance to the next way point
+                dab = np.sqrt(((bx-nx)**2)+((by-ny)**2))
+                if(dt is not None):
+                    if(dab<=dt): break
+                
+                
+                
+                
+                
+                # Insert the next point in the path
+                ptxs_smooth.append(nx)
+                ptys_smooth.append(ny)
+                
+                # Check if this segment of the path is complete
+                if(dab<=path.step_size): break
+            
+            
+                
+        # The next dense point is always the next waypoint 
+        ptxs_smooth.append(path.ways_x[i+1])
+        ptys_smooth.append(path.ways_y[i+1])
+        
+        
+        
+        
+        
+        
+        
+    
+    
+    vels_smooth = [5 for i in range(len(ptxs_smooth))]
+    oris_smooth = [90 for i in range(len(ptxs_smooth))] # don't forget discontinuity
+    dsts_smooth = [1 for i in range(len(ptxs_smooth))]
+    tims_smooth = [1 for i in range(len(ptxs_smooth))]  
+        
+        
+        
+        
+        
+        
+        
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    # Update the path
+    path.updateSmoothPath(ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth)
+    
+    return path
+
+#-----------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def popupPtData(path,x_prior,y_prior):
     """
     Creates a pop-up window that allows a user to create or edit a waypoint
@@ -641,7 +881,7 @@ def definePath(path,file_I,file_robot):
             if(path.numWayPoints()>1):
                 
                 # Calculate the path
-                path = generatePath(path)
+                path = generatePath2(path)
                 
                 # Display the path metrics
                 details_start = 'start at (%0.2f in, %0.2f in, %0.0f°)' %(path.smooths_x[0],path.smooths_y[0],path.smooths_o[0])

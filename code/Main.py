@@ -3,7 +3,7 @@
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '1.2.0' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionNumber = '2.0.0' # breaking.major-feature-add.minor-feature-or-bug-fix
 versionType = 'beta' # options are "beta" or "release"
 print('Loading v%s...' %(versionNumber))
 
