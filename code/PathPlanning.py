@@ -428,26 +428,16 @@ def generatePath2(path):
         
         
         
-        
-            
-        # #***
-        # cx = bx+r*np.cos(gamma)
-        # cy = by+r*np.sin(gamma)
-        # ptxs_smooth_linear.append(cx)
-        # ptys_smooth_linear.append(cy)
-        # vels_smooth.append(4*12*i)
-        # dsts_smooth.append(1)
-        # tims_smooth.append(1)
-        
-        
-        
     vels_smooth = [0] #***   
     k = 0
         
     # Generate the dense position points
     ptxs_smooth = [path.ways_x[0]]
     ptys_smooth = [path.ways_y[0]]
-    flag_arc = False
+    section = 'middle'
+    rx = None
+    ry = None
+    kappa = None
     for i in range(0,path.numWayPoints()-1,1):
         
         # Get the coordinates of the relevant waypoints
@@ -457,15 +447,16 @@ def generatePath2(path):
         by = path.ways_y[i+1]
         
         # Get the relevant turn information
-        dbt = ways_dbt[i+1]
-        gamma = ways_gamma[i+1]
-        clock = ways_clock[i+1]
-        
-        delta_kappa = path.step_size/R
+        dat_beg = ways_dbt[i]
+        gamma_beg = ways_gamma[i]
+        clock_beg= ways_clock[i]
+        delta_kappa_beg = path.step_size/R #***
+        dbt_end = ways_dbt[i+1]
+        gamma_end = ways_gamma[i+1]
+        clock_end = ways_clock[i+1]
+        delta_kappa_end = path.step_size/R #***
         
         flag_nxt = False
-        flag_arc = False #***
-        kappa = 0 #***
         
         
         # Check that the waypoints aren't closer than the step size
@@ -473,7 +464,33 @@ def generatePath2(path):
         if(dw>path.step_size):
             while(True):
                 
-                if(not flag_arc):
+                if(section=='begarc'):
+                    
+                    # Find the arc center
+                    # has not moved from previous arcend
+                
+                    # Determine the angle to start at
+                    # pick up where you left off from previous arcend
+                    
+                    # Calculate the transition point
+                    alpha_ab = np.arctan2((by-ay),(bx-ax))
+                    tx = ax+dat_beg*np.cos(alpha_ab)
+                    ty = ay+dat_beg*np.sin(alpha_ab)
+                
+                    # Calculate the next point on the arc and increment
+                    nx = rx+R*np.cos(kappa)
+                    ny = ry+R*np.sin(kappa)
+                    kappa += clock_beg*delta_kappa_beg
+                    
+                    # Check for the transition of the arc
+                    dotproduct = (nx-rx)*(tx-rx)+(ny-ry)*(ty-ry)
+                    mag_rn = np.sqrt(((nx-rx)**2)+((ny-ry)**2))
+                    mag_rt = np.sqrt(((tx-rx)**2)+((ty-ry)**2))
+                    theta = np.arccos(dotproduct/(mag_rn*mag_rt))
+                    if(theta<=delta_kappa_beg): 
+                        section = 'middle'
+                
+                if(section=='middle'):
                 
                     # Calculate the next point
                     alpha_ab = np.arctan2((by-ay),(bx-ax))
@@ -490,20 +507,17 @@ def generatePath2(path):
                     
                     # Check if we should start arcing
                     if(not flag_nxt):
-                        if(dbt is not None):
-                            if(dab<=dbt): 
+                        if(dbt_end is not None):
+                            if(dab<=dbt_end): 
                                 kappa = None
-                                flag_arc = True
-                        
+                                section = 'endarc'
                        
-                        
-                       
-                if(flag_arc):
+                if(section=='endarc'):
                     
                     # Find the arc center
-                    dbr = np.sqrt((dbt**2)+(R**2))
-                    rx = bx+dbr*np.cos(gamma)
-                    ry = by+dbr*np.sin(gamma)
+                    dbr = np.sqrt((dbt_end**2)+(R**2))
+                    rx = bx+dbr*np.cos(gamma_end)
+                    ry = by+dbr*np.sin(gamma_end)
                     
                     # Determine the angle to start at
                     if(kappa is None):
@@ -512,42 +526,34 @@ def generatePath2(path):
                     # Calculate the next point on the arc and increment
                     nx = rx+R*np.cos(kappa)
                     ny = ry+R*np.sin(kappa)
-                    kappa += clock*delta_kappa
+                    kappa += clock_end*delta_kappa_end
                     
                     # Check for the end of the arc
                     dotproduct = (nx-rx)*(bx-rx)+(ny-ry)*(by-ry)
                     mag_rn = np.sqrt(((nx-rx)**2)+((ny-ry)**2))
                     mag_rb = np.sqrt(((bx-rx)**2)+((by-ry)**2))
                     theta = np.arccos(dotproduct/(mag_rn*mag_rb))
-                    print(180*theta/np.pi)
-                    if(theta<=delta_kappa): flag_nxt = True
+                    if(theta<=delta_kappa_end): 
+                        section = 'begarc'
+                        flag_nxt = True
                         
-                    
-                
-                
-                
-                
-                
                 # Insert the next point in the path
                 ptxs_smooth.append(nx)
                 ptys_smooth.append(ny)
-                vels_smooth.append(k/3)
+                vels_smooth.append(k/3) #***
                 k += 1
                 
                 # Check if this segment of the path is complete
                 if(flag_nxt): break
                     
-                    
-                    
-            
-            
+        else: section = 'middle'            
                 
-        # The next dense point is always the next waypoint if there was no arc 
-        # if(not flag_arc):***
-        ptxs_smooth.append(path.ways_x[i+1])
-        ptys_smooth.append(path.ways_y[i+1])
-        vels_smooth.append(k/3)
-        k += 1
+        # The next dense point is the next waypoint if there was no arc 
+        if(section=='middle'):
+            ptxs_smooth.append(path.ways_x[i+1])
+            ptys_smooth.append(path.ways_y[i+1])
+            vels_smooth.append(k/3) #***
+            k += 1
         
         
         
