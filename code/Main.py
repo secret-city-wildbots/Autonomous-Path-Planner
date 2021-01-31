@@ -124,8 +124,6 @@ class Path():
         self.v_max = 12*15.0 # (in/s) maximum robot velocity
         self.a_max = 12*3.0 # (in/s^2) maximum robot acceleration
         self.step_size = 1.0 # (in) path step size
-        self.radius_min = 12.0 # (in) minimum robot turn radius
-        self.radius_max = 100.0 # (in) maximum robot turn radius
         
         # Reset the path
         self.reset()
@@ -143,6 +141,7 @@ class Path():
         self.ways_y = [] # (in) list of way point y positions
         self.ways_v = [] # (in/s) list of way point velocities
         self.ways_o = [] # (deg) list of way point orientations
+        self.ways_R = [] # (in) list of way point turn radii
         
         # Smooth path
         self.smooths_x = [] # (in) list of smooth x positions
@@ -187,6 +186,7 @@ class Path():
             y_init = np.round(y_prior,2) # (ft)
             v_init = 1.0
             o_init = 0.0
+            R_init = self.step_size
             
         else:
             
@@ -198,10 +198,11 @@ class Path():
             y_init = np.round(self.ways_y[i],2) # (in)
             v_init = (1/12)*self.ways_v[i]
             o_init = self.ways_o[i]
+            R_init = self.ways_R[i]
         
-        return x_init, y_init, v_init, o_init, way_index
+        return x_init, y_init, v_init, o_init, R_init, way_index
     
-    def addWayPoint(self,x,y,v,o,way_index):
+    def addWayPoint(self,x,y,v,o,R,way_index):
         
         if(way_index==-1):
             
@@ -210,6 +211,7 @@ class Path():
             (self.ways_y).append(y)
             (self.ways_v).append(v)
             (self.ways_o).append(o)
+            (self.ways_R).append(R)
             
         else:
             
@@ -218,6 +220,7 @@ class Path():
             self.ways_y[way_index] = y
             self.ways_v[way_index] = v
             self.ways_o[way_index] = o
+            self.ways_R[way_index] = R
         
     def removeWayPoint(self,way_index):
         
@@ -233,6 +236,7 @@ class Path():
             (self.ways_y).pop(way_index)
             (self.ways_v).pop(way_index)
             (self.ways_o).pop(way_index)
+            (self.ways_R).pop(way_index)
             
     def loadWayPoints(self,file_csv):
         
@@ -246,6 +250,7 @@ class Path():
             self.ways_y = list(df['Way Y (in)'].values)
             self.ways_v = list(df['Way Velocity (in/s)'].values)
             self.ways_o = list(df['Way Orientation (deg)'].values)
+            self.ways_R = list(df['Way Turn Radius (in)'].values)
             
             # Remove dummy values saved in the .csv file
             while(True):
@@ -255,6 +260,7 @@ class Path():
                     self.ways_y.pop(-1)
                     self.ways_v.pop(-1)
                     self.ways_o.pop(-1)
+                    self.ways_R.pop(-1)
                     
             # Record the filename
             filename = file_csv.split('/')[-1]
@@ -354,20 +360,16 @@ def actionApplySettings(*args):
     [field_x_real,flags] = gensup.safeTextEntry(flags,textFields[0]['field'],'float',vmin=0.0,vmax=100.0)
     [field_y_real,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=0.0,vmax=100.0)
     [v_max,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=1.0,vmax=30.0)
-    [step_size,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=1.0,vmax=100.0)
-    [radius_min,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=1.0,vmax=1000.0)
-    [radius_max,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=1.1*radius_min,vmax=1000.0)
-    [a_max,flags] = gensup.safeTextEntry(flags,textFields[6]['field'],'float',vmin=0.5,vmax=100.0)
+    [a_max,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=0.5,vmax=100.0)
+    [step_size,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=1.0,vmax=100.0)
     
     # Save the error-free entries in the correct units
     if(flags):
         path.field_x_real = 12.0*field_x_real
         path.field_y_real = 12.0*field_y_real
         path.v_max = 12.0*v_max
-        path.step_size =step_size
-        path.radius_min = radius_min
-        path.radius_max = radius_max
         path.a_max = 12.0*a_max
+        path.step_size =step_size
         
 #-----------------------------------------------------------------------------
 
@@ -400,7 +402,7 @@ def actionLoadField(*args):
 guiwindow = tk.Tk()
 guiwindow.title(softwareName)
 windW = int(0.30*min(1080,minScrnDim)) # window width
-windH = int(0.75*min(1080,minScrnDim)) # window height 
+windH = int(0.60*min(1080,minScrnDim)) # window height 
 guiwindow.geometry(str(windW)+'x'+str(windH))
 guiwindow.configure(background=guiColor_offwhite)
 guiwindow.resizable(width=False, height=False)
@@ -420,17 +422,13 @@ gensup.easyTkImageDisplay(guiwindow,logo,I_logo,forceSize=[int(564*guiScaling),i
 fieldNames = ['Field Length (ft)',
               'Field Width (ft)',
               'Maximum Robot Velocity (ft/s)',
-              'Step Size (in)',
-              'Minimum Turn Radius (in)',
-              'Maximum Turn Radius (in)',
-              'Maximum Robot Acceleration (ft/s²)']
+              'Maximum Robot Acceleration (ft/s²)',
+              'Step Size (in)']
 defaults = [path.field_x_real/12.0,
             path.field_y_real/12.0,
             path.v_max/12.0,
-            path.step_size,
-            path.radius_min,
-            path.radius_max,
-            path.a_max/12.0]
+            path.a_max/12.0,
+            path.step_size]
 
 # Set up the settings elements
 textFields = []
@@ -453,8 +451,6 @@ for i in range(0,len(textFields),1):
     textFields[i]['field'].pack()
 buttonApply.pack(pady=20)
 logo.pack(pady=20)
-
-# Final GUI initializations
 
 # Run the GUI window
 if((__name__ == '__main__') and not flag_upgraded):

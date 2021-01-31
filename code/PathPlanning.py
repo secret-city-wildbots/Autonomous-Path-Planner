@@ -366,24 +366,11 @@ def generatePath2(path):
         path: the updated robot path
     """
     
-
-        
-        
-        
-        
-        
-        
-        
-    R = 6 #***
-    
-    
     # Characterize the turns
     ways_clock = [None]
     ways_gamma = [None]
     ways_dbt = [None]
     for i in range(1,path.numWayPoints()-1,1):
-        
-        print('')
         
         # Get the coordinates of the relevant waypoints
         ax = path.ways_x[i-1]
@@ -399,7 +386,6 @@ def generatePath2(path):
         mag_bc = np.sqrt(((cx-bx)**2)+((cy-by)**2))
         theta = np.arccos(dotproduct/(mag_ba*mag_bc))
         theta_half = theta/2
-        print('theta: ',180*theta/np.pi)
         
         # Calculate the angle from the x-axis to the line bisecting the segments
         alpha_bc = np.arctan2((cy-by),(cx-bx))
@@ -412,10 +398,9 @@ def generatePath2(path):
             gamma = alpha_bc-theta_half
         ways_gamma.append(gamma)
         ways_clock.append(clock)
-        print('gamma: ',180*gamma/np.pi)
         
         # Calculate transition distance along the linear segments
-        dbt = R/np.tan(theta_half)
+        dbt = path.ways_R[i]/np.tan(theta_half)
         ways_dbt.append(dbt)
         
     # The last waypoint never has any smoothing
@@ -448,16 +433,17 @@ def generatePath2(path):
         
         # Get the relevant turn information
         dat_beg = ways_dbt[i]
-        gamma_beg = ways_gamma[i]
-        clock_beg= ways_clock[i]
-        delta_kappa_beg = path.step_size/R #***
+        clock_beg = ways_clock[i]
+        R_beg = path.ways_R[i]
+        delta_kappa_beg = path.step_size/R_beg
         dbt_end = ways_dbt[i+1]
         gamma_end = ways_gamma[i+1]
         clock_end = ways_clock[i+1]
-        delta_kappa_end = path.step_size/R #***
+        R_end = path.ways_R[i+1]
+        delta_kappa_end = path.step_size/R_end
         
+        # Reset the next segment flag
         flag_nxt = False
-        
         
         # Check that the waypoints aren't closer than the step size
         dw = np.sqrt(((bx-ax)**2)+((by-ay)**2))
@@ -478,8 +464,8 @@ def generatePath2(path):
                     ty = ay+dat_beg*np.sin(alpha_ab)
                 
                     # Calculate the next point on the arc and increment
-                    nx = rx+R*np.cos(kappa)
-                    ny = ry+R*np.sin(kappa)
+                    nx = rx+R_beg*np.cos(kappa)
+                    ny = ry+R_beg*np.sin(kappa)
                     kappa += clock_beg*delta_kappa_beg
                     
                     # Check for the transition of the arc
@@ -515,7 +501,7 @@ def generatePath2(path):
                 if(section=='endarc'):
                     
                     # Find the arc center
-                    dbr = np.sqrt((dbt_end**2)+(R**2))
+                    dbr = np.sqrt((dbt_end**2)+(R_end**2))
                     rx = bx+dbr*np.cos(gamma_end)
                     ry = by+dbr*np.sin(gamma_end)
                     
@@ -524,8 +510,8 @@ def generatePath2(path):
                         kappa = np.arctan2((ny-ry),(nx-rx))
                     
                     # Calculate the next point on the arc and increment
-                    nx = rx+R*np.cos(kappa)
-                    ny = ry+R*np.sin(kappa)
+                    nx = rx+R_end*np.cos(kappa)
+                    ny = ry+R_end*np.sin(kappa)
                     kappa += clock_end*delta_kappa_end
                     
                     # Check for the end of the arc
@@ -654,7 +640,7 @@ def popupPtData(path,x_prior,y_prior):
     """
     
     # Configure waypoint selection
-    [x_init,y_init,v_init,o_init,way_index] = path.configureWayPoint(x_prior,y_prior)
+    [x_init,y_init,v_init,o_init,R_init,way_index] = path.configureWayPoint(x_prior,y_prior)
     
     # Define button callbacks
     def actionClose(*args):
@@ -672,12 +658,13 @@ def popupPtData(path,x_prior,y_prior):
         [y_way,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=0.0,vmax=path.field_y_real)
         [v_way,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=0.0,vmax=path.v_max/12.0)
         [o_way,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=0.0,vmax=360.0)
+        [R_way,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=path.step_size)
     
         # Save the error-free entries in the correct units
         if(flags):
              
             # Add way point
-            path.addWayPoint(x_way,y_way,v_way*12,o_way,way_index)
+            path.addWayPoint(x_way,y_way,v_way*12,o_way,R_way,way_index)
             
             # Close the popup
             actionClose()
@@ -692,7 +679,7 @@ def popupPtData(path,x_prior,y_prior):
     popwindow = tk.Toplevel()
     popwindow.title('Waypoint')
     windW = 250 # window width
-    windH = 425 # window height 
+    windH = 500 # window height 
     popwindow.geometry(str(windW)+'x'+str(windH))
     popwindow.configure(background=guiColor_offwhite)
     popwindow.resizable(width=False, height=False)
@@ -707,11 +694,13 @@ def popupPtData(path,x_prior,y_prior):
     fieldNames = ['X Position (in)',
                   'Y Position (in)',
                   'Velocity (ft/s)',
-                  'Orientation (deg) [0-360]']
+                  'Orientation (deg) [0-360]',
+                  'Turn Radius (in)']
     defaults = [x_init,
                 y_init,
                 v_init,
-                o_init]
+                o_init,
+                R_init]
     
     # Set up the elements
     textFields = []
@@ -998,7 +987,8 @@ def definePath(path,file_I,file_robot):
                                         "Way X (in)": path.ways_x + nComp*[''],
                                         "Way Y (in)": path.ways_y + nComp*[''],
                                         "Way Velocity (in/s)": path.ways_v + nComp*[''],
-                                        "Way Orientation (deg)": path.ways_o + nComp*['']})
+                                        "Way Orientation (deg)": path.ways_o + nComp*[''],
+                                        "Way Turn Radius (in)": path.ways_R + nComp*['']})
             df.to_csv("../robot paths/%s.csv" %(filename), sep=',',index=False)
             
             # Save an image of the path planning figure
