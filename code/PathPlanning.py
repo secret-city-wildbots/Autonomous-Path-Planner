@@ -389,8 +389,8 @@ def generatePath2(path):
         
         # Calculate the angle from the x-axis to the line bisecting the segments
         alpha_bc = np.arctan2((cy-by),(cx-bx))
-        crossproduct = ax*by-ay*bx
-        if(crossproduct>=0):
+        crossproduct = (ax-bx)*(cy-by)-(ay-by)*(cx-bx)
+        if(crossproduct<0):
             clock = 1
             gamma = alpha_bc+theta_half
         else: 
@@ -526,7 +526,7 @@ def generatePath2(path):
                 # Insert the next point in the path
                 ptxs_smooth.append(nx)
                 ptys_smooth.append(ny)
-                vels_smooth.append(k/3) #***
+                vels_smooth.append(k/4) #***
                 k += 1
                 
                 # Check if this segment of the path is complete
@@ -538,7 +538,7 @@ def generatePath2(path):
         if(section=='middle'):
             ptxs_smooth.append(path.ways_x[i+1])
             ptys_smooth.append(path.ways_y[i+1])
-            vels_smooth.append(k/3) #***
+            vels_smooth.append(k/4) #***
             k += 1
         
         
@@ -658,7 +658,7 @@ def popupPtData(path,x_prior,y_prior):
         [y_way,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=0.0,vmax=path.field_y_real)
         [v_way,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=0.0,vmax=path.v_max/12.0)
         [o_way,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=0.0,vmax=360.0)
-        [R_way,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=path.step_size)
+        [R_way,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=3*path.step_size)
     
         # Save the error-free entries in the correct units
         if(flags):

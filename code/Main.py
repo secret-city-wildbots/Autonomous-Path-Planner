@@ -1,4 +1,4 @@
-# Date: 2020-10-11
+# Date: 2021-01-31
 # Description: a path planner for FRC 2020
 #-----------------------------------------------------------------------------
 
@@ -186,7 +186,7 @@ class Path():
             y_init = np.round(y_prior,2) # (ft)
             v_init = 1.0
             o_init = 0.0
-            R_init = self.step_size
+            R_init = 3*self.step_size
             
         else:
             
