@@ -374,10 +374,13 @@ def generatePath2(path):
         
         
         
-    r = 12 #***
+    R = 6 #***
+    
     
     # Characterize the turns
-    ways_dt = [None]
+    ways_clock = [None]
+    ways_gamma = [None]
+    ways_dbt = [None]
     for i in range(1,path.numWayPoints()-1,1):
         
         print('')
@@ -401,16 +404,25 @@ def generatePath2(path):
         # Calculate the angle from the x-axis to the line bisecting the segments
         alpha_bc = np.arctan2((cy-by),(cx-bx))
         crossproduct = ax*by-ay*bx
-        if(crossproduct>=0): gamma = alpha_bc+theta_half
-        else: gamma = alpha_bc-theta_half
+        if(crossproduct>=0):
+            clock = 1
+            gamma = alpha_bc+theta_half
+        else: 
+            clock = -1
+            gamma = alpha_bc-theta_half
+        ways_gamma.append(gamma)
+        ways_clock.append(clock)
         print('gamma: ',180*gamma/np.pi)
         
         # Calculate transition distance along the linear segments
-        dt = r/np.tan(theta_half)
-        ways_dt.append(dt)
+        dbt = R/np.tan(theta_half)
+        ways_dbt.append(dbt)
         
     # The last waypoint never has any smoothing
-    ways_dt.append(None)
+    ways_clock.append(None)
+    ways_gamma.append(None)
+    ways_dbt.append(None)
+    
         
         
         
@@ -430,6 +442,7 @@ def generatePath2(path):
         
         
     vels_smooth = [0] #***   
+    k = 0
         
     # Generate the dense position points
     ptxs_smooth = [path.ways_x[0]]
@@ -442,10 +455,17 @@ def generatePath2(path):
         ay = path.ways_y[i]
         bx = path.ways_x[i+1]
         by = path.ways_y[i+1]
-        dt = ways_dt[i+1]
         
+        # Get the relevant turn information
+        dbt = ways_dbt[i+1]
+        gamma = ways_gamma[i+1]
+        clock = ways_clock[i+1]
         
+        delta_kappa = path.step_size/R
+        
+        flag_nxt = False
         flag_arc = False #***
+        kappa = 0 #***
         
         
         # Check that the waypoints aren't closer than the step size
@@ -453,19 +473,56 @@ def generatePath2(path):
         if(dw>path.step_size):
             while(True):
                 
-                # if(not flag_arc):
+                if(not flag_arc):
                 
-                # Calculate the next point
-                alpha_ab = np.arctan2((by-ay),(bx-ax))
-                dx = path.step_size*np.cos(alpha_ab)
-                dy = path.step_size*np.sin(alpha_ab)
-                nx = ptxs_smooth[-1]+dx
-                ny = ptys_smooth[-1]+dy
-                
-                # Calculate remaining linear distance to the next way point
-                dab = np.sqrt(((bx-nx)**2)+((by-ny)**2))
-                if(dt is not None):
-                    if(dab<=dt): break
+                    # Calculate the next point
+                    alpha_ab = np.arctan2((by-ay),(bx-ax))
+                    dx = path.step_size*np.cos(alpha_ab)
+                    dy = path.step_size*np.sin(alpha_ab)
+                    nx = ptxs_smooth[-1]+dx
+                    ny = ptys_smooth[-1]+dy
+                    
+                    # Calculate remaining linear distance to the next way point
+                    dab = np.sqrt(((bx-nx)**2)+((by-ny)**2))
+                    
+                    # Check if we are at the end of this segment
+                    if(dab<=path.step_size): flag_nxt = True
+                    
+                    # Check if we should start arcing
+                    if(not flag_nxt):
+                        if(dbt is not None):
+                            if(dab<=dbt): 
+                                kappa = None
+                                flag_arc = True
+                        
+                       
+                        
+                       
+                if(flag_arc):
+                    
+                    # Find the arc center
+                    dbr = np.sqrt((dbt**2)+(R**2))
+                    rx = bx+dbr*np.cos(gamma)
+                    ry = by+dbr*np.sin(gamma)
+                    
+                    # Determine the angle to start at
+                    if(kappa is None):
+                        kappa = np.arctan2((ny-ry),(nx-rx))
+                    
+                    # Calculate the next point on the arc and increment
+                    nx = rx+R*np.cos(kappa)
+                    ny = ry+R*np.sin(kappa)
+                    kappa += clock*delta_kappa
+                    
+                    # Check for the end of the arc
+                    dotproduct = (nx-rx)*(bx-rx)+(ny-ry)*(by-ry)
+                    mag_rn = np.sqrt(((nx-rx)**2)+((ny-ry)**2))
+                    mag_rb = np.sqrt(((bx-rx)**2)+((by-ry)**2))
+                    theta = np.arccos(dotproduct/(mag_rn*mag_rb))
+                    print(180*theta/np.pi)
+                    if(theta<=delta_kappa): flag_nxt = True
+                        
+                    
                 
                 
                 
@@ -474,15 +531,23 @@ def generatePath2(path):
                 # Insert the next point in the path
                 ptxs_smooth.append(nx)
                 ptys_smooth.append(ny)
+                vels_smooth.append(k/3)
+                k += 1
                 
                 # Check if this segment of the path is complete
-                if(dab<=path.step_size): break
+                if(flag_nxt): break
+                    
+                    
+                    
             
             
                 
-        # The next dense point is always the next waypoint 
+        # The next dense point is always the next waypoint if there was no arc 
+        # if(not flag_arc):***
         ptxs_smooth.append(path.ways_x[i+1])
         ptys_smooth.append(path.ways_y[i+1])
+        vels_smooth.append(k/3)
+        k += 1
         
         
         
@@ -492,7 +557,7 @@ def generatePath2(path):
         
     
     
-    vels_smooth = [5 for i in range(len(ptxs_smooth))]
+    # vels_smooth = [5 for i in range(len(ptxs_smooth))]
     oris_smooth = [90 for i in range(len(ptxs_smooth))] # don't forget discontinuity
     dsts_smooth = [1 for i in range(len(ptxs_smooth))]
     tims_smooth = [1 for i in range(len(ptxs_smooth))]  
