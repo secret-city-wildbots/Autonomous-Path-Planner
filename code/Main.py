@@ -78,6 +78,7 @@ guiColor_black = h_npz_settings['guiColor_black']
 guiColor_white = h_npz_settings['guiColor_white']
 guiColor_offwhite = h_npz_settings['guiColor_offwhite']
 guiColor_hotpink = h_npz_settings['guiColor_hotpink']
+guiColor_hotgreen = h_npz_settings['guiColor_hotgreen']
 guiFontSize_large = h_npz_settings['guiFontSize_large']
 guiFontSize_small = h_npz_settings['guiFontSize_small']
 guiFontType_normal = h_npz_settings['guiFontType_normal']
@@ -327,20 +328,6 @@ def easyPlace(h,x,y):
     elif((x>=0)&(y<0)): h.place(x=abs(x)*windW,y=windH-abs(y)*windH,anchor=tk.SW)
     elif((x<0)&(y<0)): h.place(x=windW-abs(x)*windW,y=windH-abs(y)*windH,anchor=tk.SE)
     
-def lockMenus(topMenus,flag_lock): 
-    """
-    Simplifies the locking and un-locking process for the top menus
-    """           
-            
-    # Set flags for locking an unlocking the menus
-    if(flag_lock==True): lock = tk.DISABLED
-    else: lock = tk.NORMAL 
-    
-    # Lock or unlock specific sets of menus
-    for menu in topMenus:
-        if(menu=='File'):
-            menuFile.entryconfig('Load Field Map',state=lock) 
-
 #-----------------------------------------------------------------------------
 
 def actionNope(*args):
@@ -404,31 +391,37 @@ def actionLoadField(*args):
     Loads the field map and allows the user to start planning a path
     """
     
+    # Lock the GUI
+    buttonPlan.configure(bg=guiColor_offwhite,state=tk.DISABLED)
+    
     # Reinitialize the path
     path.reset()
     
     # Ask the user to load a field map
     file_I = filedialog.askopenfilename(initialdir='../field drawings/',title = 'Select a Field Drawing',filetypes=recognizedImageExtensions)
     
-    # Ask the user to load a robot model
-    file_robot = filedialog.askopenfilename(initialdir='../robot models/',title = 'Select a Robot Model',filetypes=recognizedImageExtensions)
+    if(file_I!=''):
     
-    # Ask the user to load a previous path
-    file_csv = filedialog.askopenfilename(initialdir='../robot paths/',title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
-    path.loadWayPoints(file_csv)
+        # Ask the user to load a robot model
+        file_robot = filedialog.askopenfilename(initialdir='../robot models/',title = 'Select a Robot Model',filetypes=recognizedImageExtensions)
+        
+        # Ask the user to load a previous path
+        file_csv = filedialog.askopenfilename(initialdir='../robot paths/',title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
+        path.loadWayPoints(file_csv)
+        
+        # Start the path planner
+        plan.definePath(path,file_I,file_robot)
     
-    # Start the path planner
-    lockMenus(['File'],True)
-    plan.definePath(path,file_I,file_robot)
-    lockMenus(['File'],False)
+    # Reset the GUI
+    buttonPlan.configure(bg=guiColor_hotgreen,state=tk.NORMAL)
     
 #-----------------------------------------------------------------------------
 
 # Open the GUI window
 guiwindow = tk.Tk()
 guiwindow.title(softwareName)
-windW = int(0.30*min(1080,minScrnDim)) # window width
-windH = int(0.60*min(1080,minScrnDim)) # window height 
+windW = int(0.28*min(1080,minScrnDim)) # window width
+windH = int(0.65*min(1080,minScrnDim)) # window height 
 guiwindow.geometry(str(windW)+'x'+str(windH))
 guiwindow.configure(background=guiColor_offwhite)
 guiwindow.resizable(width=False, height=False)
@@ -462,21 +455,15 @@ for i in range(0,len(fieldNames),1):
     [title,field] = gensup.easyTextField(guiwindow,windW,fieldNames[i],str(defaults[i]))
     textFields.append({'title': title, 'field': field})
 buttonApply = tk.Button(guiwindow,text='Apply',fg=guiColor_black,bg=guiColor_hotpink,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.02*windW),command=actionApplySettings)
-
-# Set up the menu bar
-menubar = tk.Menu(guiwindow)
-menuFile = tk.Menu(menubar, tearoff=0)
-menuFile.add_command(label='Load Field Map',command=actionLoadField)
-menuFile.add_command(label='Quit',command=actionQuit)
-menubar.add_cascade(label='File',menu=menuFile)
-guiwindow.config(menu=menubar)
+buttonPlan = tk.Button(guiwindow,text='Plan',fg=guiColor_black,bg=guiColor_hotgreen,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.02*windW),command=actionLoadField)
 
 # Place all elements
 for i in range(0,len(textFields),1):
     textFields[i]['title'].pack(fill='both')
     textFields[i]['field'].pack()
-buttonApply.pack(pady=20)
-logo.pack(pady=20)
+buttonApply.pack(pady=10)
+buttonPlan.pack(pady=10)
+logo.pack(pady=10)
 
 # Run the GUI window
 if((__name__ == '__main__') and not flag_upgraded):
