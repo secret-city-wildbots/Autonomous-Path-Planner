@@ -44,328 +44,6 @@ def generatePath(path):
         path: the updated robot path
     """
     
-    # Extract information from the path
-    ways_x = path.ways_x
-    ways_y = path.ways_y
-    ways_v = path.ways_v
-    ways_o = path.ways_o
-    
-    # Acceleration limit between the way points
-    flag_toofast = True
-    while(flag_toofast):
-        for i in range(0,path.numWayPoints()-1,1):
-           
-            # Calculate the requested delta v
-            max_s = np.sqrt(((ways_y[i+1]-ways_y[i])**2)+((ways_x[i+1]-ways_x[i])**2)) 
-            delta_v_req = ways_v[i+1]-ways_v[i]
-            
-            # Calculate the max permitted delta v
-            delta_v_max = -ways_v[i] + np.sqrt((ways_v[i]**2)+2*path.a_max*max_s)
-           
-            # Force replacement of the waypoint target speeds
-            if(delta_v_req>0):
-                if(delta_v_req>delta_v_max):
-                    ways_v[i+1] = delta_v_max + ways_v[i]
-                    path.ways_v[i+1] = ways_v[i+1]
-                    flag_toofast = True
-                    break
-                else: flag_toofast = False
-            else: flag_toofast = False
-    
-    # Insert dense points along a piece-wise linear interpolation
-    vels_segs = [] # [in/s] the dense v points listed per segment
-    oris_segs = [] # [degrees] the dense orientation points list per segment
-    ptxs_segs = [] # [inches] the dense x points listed per segment
-    ptys_segs = [] # [inches] the dense y points listed per segment
-    for i in range(0,path.numWayPoints()-1,1):
-        
-        # Initialize
-        ptxs_seg = []
-        ptys_seg = []
-        vels_seg = []
-        oris_seg = []
-        
-        # Calculate the length of the path segment
-        max_s = np.sqrt(((ways_y[i+1]-ways_y[i])**2)+((ways_x[i+1]-ways_x[i])**2)) 
-        
-        # Calculate the steps for the current path segment 
-        gamma = np.arctan2((ways_y[i+1]-ways_y[i]),(ways_x[i+1]-ways_x[i]))
-        delta_x = path.step_size*np.cos(gamma)
-        delta_y = path.step_size*np.sin(gamma)
-        delta_v = (ways_v[i+1]-ways_v[i])/max_s
-        if(ways_o[i+1]>ways_o[i]):
-            delta_oseg1 = ways_o[i+1]-ways_o[i]
-            delta_oseg2 = 360 - delta_oseg1
-            if(delta_oseg1<delta_oseg2): delta_o = delta_oseg1/max_s
-            else: delta_o = -delta_oseg2/max_s
-        else:
-            delta_oseg1 = ways_o[i]-ways_o[i+1]
-            delta_oseg2 = 360 - delta_oseg1
-            if(delta_oseg1<delta_oseg2): delta_o = -delta_oseg1/max_s
-            else: delta_o = delta_oseg2/max_s
-        
-        # Include the current waypoint
-        ptxs_seg.append(ways_x[i]) 
-        ptys_seg.append(ways_y[i]) 
-        vels_seg.append(ways_v[i])
-        oris_seg.append(ways_o[i])
-        
-        # Step the inserted points along the path
-        total_s = 0 # tracks total travel along the current path segment
-        while((total_s+path.step_size)<max_s):
-            ptxs_seg.append(ptxs_seg[-1]+delta_x)
-            ptys_seg.append(ptys_seg[-1]+delta_y)
-            vels_seg.append(vels_seg[-1]+delta_v)
-            oris_seg.append((oris_seg[-1]+delta_o)%360)
-            total_s += path.step_size 
-            
-        # Store the dense points segement-wise (needed for smoothing)
-        ptxs_segs.append(ptxs_seg)
-        ptys_segs.append(ptys_seg)
-        vels_segs.append(vels_seg)
-        oris_segs.append(oris_seg)
-            
-    # Smooth the path
-    ptxs_smooth = []
-    ptys_smooth = []
-    vels_smooth = []
-    oris_smooth = []
-    aNum_start = 0 # start point for the current segment
-    for segNum in range(0,(len(ptxs_segs)-1),1):
-        
-        # Initialize
-        flag_corner = False # False if not reached a corner yet
-        
-        # Calculate the minimum turn radius as function of velocity
-        v_wayb = ways_v[segNum+1]
-        r = v_wayb*(path.radius_max-path.radius_min)/(path.v_max) + path.radius_min
-        max_sa = np.sqrt(((ways_y[segNum+1]-ways_y[segNum])**2)+((ways_x[segNum+1]-ways_x[segNum])**2)) # length of segment
-        max_sb = np.sqrt(((ways_y[segNum+2]-ways_y[segNum+1])**2)+((ways_x[segNum+2]-ways_x[segNum+1])**2)) # length of next segment
-        r = min(r,min(0.9*max_sa,0.9*max_sb)) # prevent the radius from exceeding the segment length
-        
-        # Calculate (Q-I) gamma 
-        gamma = np.arctan2(np.abs((ways_y[segNum+1]-ways_y[segNum])),np.abs((ways_x[segNum+1]-ways_x[segNum])))
-        
-        # Calculate the perpendicular offsets from the current segment
-        delta_x = r*np.sin(gamma)
-        delta_y = r*np.cos(gamma)
-        
-        # Determine the slope of the current line segment
-        numer = (ways_y[segNum+1]-ways_y[segNum])
-        denom = (ways_x[segNum+1]-ways_x[segNum])
-        if(denom!=0): 
-            m = numer/denom
-            if(m>=0.0): seg_slope = 'positive'
-            else: seg_slope = 'negative'
-        else:
-            seg_slope = 'positive' # catch vertical slope
-        
-        for aNum in range(aNum_start,len(ptxs_segs[segNum]),1):
-            
-            # Calculate the centers (h,k) of the correct tangent circles
-            xa = ptxs_segs[segNum][aNum] # current y point in the current segment
-            ya = ptys_segs[segNum][aNum] # current x point in the current segment
-            va = vels_segs[segNum][aNum] # current velocity in the current segment
-            oa = oris_segs[segNum][aNum] # current orientation in the current segment
-            if(seg_slope=='positive'):
-                h1 = xa + delta_x
-                k1 = ya - delta_y
-                h2 = xa - delta_x
-                k2 = ya + delta_y
-            elif(seg_slope=='negative'):
-                h1 = xa + delta_x
-                k1 = ya + delta_y
-                h2 = xa - delta_x
-                k2 = ya - delta_y
-                
-            for bNum in range(0,len(ptxs_segs[segNum+1]),1):
-                
-                # Calculate distance from a point in the next segment to the circle centers
-                xb = ptxs_segs[segNum+1][bNum]
-                yb = ptys_segs[segNum+1][bNum]
-                d1 = np.sqrt(((h1-xb)**2)+((k1-yb)**2))
-                d2 = np.sqrt(((h2-xb)**2)+((k2-yb)**2))
-                
-                # Check if the point in the next segment is inside of one of the tangent circles
-                if((d1<=r)|(d2<=r)):
-                    
-                    # Determine the number of points which must be smoothed
-                    numPtsSmooth = (len(ptxs_segs[segNum]) - aNum) + (bNum+1)
-                    
-                    # Check which candidate circle is the correct one
-                    if(d1<=r):
-                        h = h1
-                        k = k1
-                    else:
-                        h = h2
-                        k = k2
-                        
-                    # Calculate the angles at intercept
-                    phia = np.arctan2((ya-k),(xa-h))
-                    if(phia<0): phia += 2.0*np.pi
-                    phib = np.arctan2((yb-k),(xb-h))
-                    if(phib<0): phib += 2.0*np.pi
-                    
-                    # Choose the interior angle
-                    if(phia>=phib):
-                        delta_phi1 = phia-phib
-                        delta_phi2 = 2.0*np.pi-phia+phib
-                        if(delta_phi1<=delta_phi2):
-                            delta_phi = delta_phi1
-                            arcDir = 'clockwise'
-                        else:
-                            delta_phi = delta_phi2
-                            arcDir = 'anticlockwise'
-                    else:
-                        delta_phi1 = phib-phia
-                        delta_phi2 = 2.0*np.pi-phib+phia
-                        if(delta_phi1<=delta_phi2):
-                            delta_phi = delta_phi1
-                            arcDir = 'anticlockwise'
-                        else:
-                            delta_phi = delta_phi2
-                            arcDir = 'clockwise'
-                    
-                    # Calculate the points along the arc
-                    phi_step = delta_phi/(numPtsSmooth-1)
-                    phis = []
-                    if(arcDir=='clockwise'):
-                        # Initerior is clockwise
-                        phi_moving = phia
-                        for q in range(0,numPtsSmooth,1):
-                            phis.append(phi_moving)
-                            phi_moving -= phi_step
-                    else:
-                        # Interior is anti-clockwise
-                        phi_moving = phia
-                        for q in range(0,numPtsSmooth,1):
-                            phis.append(phi_moving)
-                            phi_moving += phi_step
-                    
-                    # Smooth points in current segment
-                    phis_index = 0
-                    for i in range(aNum,len(ptxs_segs[segNum]),1):
-                        xa_smooth = h + r*np.cos(phis[phis_index])
-                        ya_smooth = k + r*np.sin(phis[phis_index])
-                        ptxs_smooth.append(xa_smooth)
-                        ptys_smooth.append(ya_smooth)
-                        va = vels_segs[segNum][i]
-                        vels_smooth.append(va)
-                        oa = oris_segs[segNum][i]
-                        oris_smooth.append(oa)
-                        phis_index += 1
-                    
-                    # Smooth points in next segment
-                    for i in range(0,(bNum+1),1):
-                        xb_smooth = h + r*np.cos(phis[phis_index])
-                        yb_smooth = k + r*np.sin(phis[phis_index])
-                        ptxs_smooth.append(xb_smooth)
-                        ptys_smooth.append(yb_smooth)
-                        vb = vels_segs[segNum+1][i]
-                        vels_smooth.append(vb)
-                        ob = oris_segs[segNum+1][i]
-                        oris_smooth.append(ob)
-                        phis_index += 1
-                    
-                    # Set corner flag
-                    flag_corner = True
-                    break
-                    
-            # Add the current point in the current segment to the smoothed path if it's chill
-            if(flag_corner==False):
-                ptxs_smooth.append(xa)
-                ptys_smooth.append(ya)
-                vels_smooth.append(va)
-                oris_smooth.append(oa)
-                aNum_start = 0 # start the next segment at the beginning
-            else: 
-                aNum_start = bNum+1 # start the next segment after the radius
-                break
-    
-    # Include the last line segment and the last waypoint in the smoothed path
-    for i in range(aNum_start,len(ptxs_segs[-1]),1):
-        ptxs_smooth.append(ptxs_segs[-1][i])
-        ptys_smooth.append(ptys_segs[-1][i])
-        vels_smooth.append(vels_segs[-1][i])
-        oris_smooth.append(oris_segs[-1][i])
-    ptxs_smooth.append(ways_x[-1])
-    ptys_smooth.append(ways_y[-1])
-    vels_smooth.append(ways_v[-1])
-    oris_smooth.append(ways_o[-1])
-    
-    # Calculate the distance and time, and orientation along the path
-    dsts_smooth = [] # initialize
-    tims_smooth = [] # initialize
-    dsts_smooth.append(0.0) # first point
-    tims_smooth.append(0.0) # first point
-    d_total = 0 # initialize
-    t_total = 0 # initialize
-    for i in range(0,len(ptxs_smooth)-1,1):
-        
-        # Pull the coordinates for current baby segment
-        xa = ptxs_smooth[i]
-        xb = ptxs_smooth[i+1]
-        ya = ptys_smooth[i]
-        yb = ptys_smooth[i+1]
-        va = vels_smooth[i]
-        vb = vels_smooth[i+1]
-        
-        # Calculate the distance along the path
-        d = np.sqrt(((xb-xa)**2)+((yb-ya)**2))
-        d_total += d
-        dsts_smooth.append(d_total)
-        
-        # Calculate the times along the path
-        v_avg = 0.5*(va+vb)
-        t = d/v_avg
-        t_total += t
-        tims_smooth.append(t_total)
-        
-        # # Calculate the along-path orientations [180,-180]
-        # theta = 180.0*np.arctan2((yb-ya),(xb-xa))/np.pi
-        
-    # Update the path
-    path.updateSmoothPath(ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth)
-    
-    return path
-
-#-----------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def generatePath2(path):
-    """
-    Generates a smooth path based on a set of waypoints
-    Args:
-        path: robot path 
-    Returns:
-        path: the updated robot path
-    """
-    
     # Characterize the turns
     ways_clock = [None]
     ways_gamma = [None]
@@ -606,57 +284,39 @@ def generatePath2(path):
         t_total += delta_t
         tims_smooth.append(t_total)
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    oris_smooth = [90 for i in range(len(ptxs_smooth))] # don't forget discontinuity
+    # Calculate the smooth orientations
+    wayNum = 0
+    o_running = path.ways_o[0] # intialize to start orientation
+    oris_smooth = [o_running]
+    for i in range(1,len(ptxs_smooth),1):
         
-        
-        
-        
-        
-        
-        
+        if(idxs_smooth[i]!=wayNum):
+            
+            # Determine the requested delta o
+            wayNum += 1
+            o_goal = path.ways_o[wayNum]
+            if(o_goal>o_running):
+                delta_oseg1 = o_goal-o_running
+                delta_oseg2 = 360 - delta_oseg1
+                if(delta_oseg1<delta_oseg2): delta_o = delta_oseg1
+                else: delta_o = -delta_oseg2
+            else:
+                delta_oseg1 = o_running-o_goal
+                delta_oseg2 = 360 - delta_oseg1
+                if(delta_oseg1<delta_oseg2): delta_o = -delta_oseg1
+                else: delta_o = delta_oseg2
+                
+            # Travel distance avalaible in this segment
+            delta_s_seg = dsts_segs[wayNum] 
+                
+            # Normalize the delta o per unit distance
+            delta_o_per_s = delta_o/delta_s_seg
+            
+        # Update the robot's current orientation
+        delta_s = dsts_smooth[i]-dsts_smooth[i-1]
+        o_running += delta_o_per_s*delta_s
+        oris_smooth.append(o_running%360)
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-        
     # Update the path
     path.updateSmoothPath(ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth)
     
@@ -1026,7 +686,7 @@ def definePath(path,file_I,file_robot):
             if(path.numWayPoints()>1):
                 
                 # Calculate the path
-                path = generatePath2(path)
+                path = generatePath(path)
                 
                 # Display the path metrics
                 details_start = 'start at (%0.2f in, %0.2f in, %0.0f°)' %(path.smooths_x[0],path.smooths_y[0],path.smooths_o[0])
