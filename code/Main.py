@@ -159,6 +159,7 @@ class Path():
         self.ways_v = [] # (in/s) list of way point velocities
         self.ways_o = [] # (deg) list of way point orientations
         self.ways_R = [] # (in) list of way point turn radii
+        self.ways_T = [] # (in) list of way point touch priority
         
         # Smooth path
         self.smooths_x = [] # (in) list of smooth x positions
