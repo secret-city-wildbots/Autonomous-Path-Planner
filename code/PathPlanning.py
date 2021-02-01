@@ -408,15 +408,8 @@ def generatePath2(path):
     ways_gamma.append(None)
     ways_dbt.append(None)
     
-        
-        
-        
-        
-        
-    vels_smooth = [0] #***   
-    k = 0
-        
     # Generate the dense position points
+    idxs_smooth = [1] # the waypoint the smooth point is trying to reach
     ptxs_smooth = [path.ways_x[0]]
     ptys_smooth = [path.ways_y[0]]
     section = 'middle'
@@ -524,10 +517,9 @@ def generatePath2(path):
                         flag_nxt = True
                         
                 # Insert the next point in the path
+                idxs_smooth.append(i+1)
                 ptxs_smooth.append(nx)
                 ptys_smooth.append(ny)
-                vels_smooth.append(k/4) #***
-                k += 1
                 
                 # Check if this segment of the path is complete
                 if(flag_nxt): break
@@ -535,23 +527,59 @@ def generatePath2(path):
         else: section = 'middle'            
                 
         # The next dense point is the next waypoint if there was no arc 
+        idxs_smooth.append(i+1)
         if(section=='middle'):
             ptxs_smooth.append(path.ways_x[i+1])
             ptys_smooth.append(path.ways_y[i+1])
-            vels_smooth.append(k/4) #***
-            k += 1
         
         
         
         
         
-        
+    print(idxs_smooth)    
         
     
     
-    # vels_smooth = [5 for i in range(len(ptxs_smooth))]
+    
+    
+    # Calculate the distances along the path and for each segment
+    ds_seg = 0
+    segNum = 1
+    dsts_segs = [0]
+    dsts_smooth = [0]
+    for i in range(1,len(ptxs_smooth),1):
+        
+        # Calculate the the change in distance along the path since the last smooth point
+        ax = ptxs_smooth[i-1]
+        ay = ptys_smooth[i-1]
+        bx = ptxs_smooth[i]
+        by = ptys_smooth[i]
+        ds = np.sqrt(((bx-ax)**2)+((by-ay)**2))
+        
+        # Total distance along the path
+        ds_total = dsts_smooth[-1] + ds
+        dsts_smooth.append(ds_total)
+        
+        # Distance along the path in the current segment
+        ds_seg += ds
+        
+        # Save the distances for each segment
+        if(idxs_smooth[i]!=segNum): 
+            dsts_segs.append(ds_seg)
+            ds_seg = 0
+            segNum += 1
+            
+    # Store the distance for the final segment
+    dsts_segs.append(ds_seg)
+    
+    
+    
+    print(dsts_segs)
+    
+    
+    vels_smooth = dsts_smooth
+    
     oris_smooth = [90 for i in range(len(ptxs_smooth))] # don't forget discontinuity
-    dsts_smooth = [1 for i in range(len(ptxs_smooth))]
     tims_smooth = [1 for i in range(len(ptxs_smooth))]  
         
         
