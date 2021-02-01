@@ -581,7 +581,6 @@ def generatePath2(path):
             # Handle acceleration limiting
             if(delta_v_req>0):
                 delta_v_max = -v_running+np.sqrt((v_running**2)+(2*path.a_max*delta_s_seg))
-                print(delta_v_req,delta_v_max)
                 delta_v_okay = min(delta_v_req,delta_v_max)
             else: delta_v_okay = delta_v_req
                 
@@ -593,10 +592,19 @@ def generatePath2(path):
         v_running += delta_v_per_s*delta_s
         vels_smooth.append(v_running)
         
-            
+    # Calculate the smooth times
+    t_total = 0 # total time that the robot has been traveling
+    tims_smooth = [t_total]
+    for i in range(1,len(ptxs_smooth),1):
         
+        # Calculate the time elapsed in the current step
+        delta_s = dsts_smooth[i]-dsts_smooth[i-1]
+        v_avg = 0.5*(vels_smooth[i]+vels_smooth[i-1])
+        delta_t = delta_s/v_avg
         
-    
+        # Update the total time
+        t_total += delta_t
+        tims_smooth.append(t_total)
     
     
     
@@ -630,7 +638,6 @@ def generatePath2(path):
     
     
     oris_smooth = [90 for i in range(len(ptxs_smooth))] # don't forget discontinuity
-    tims_smooth = [1 for i in range(len(ptxs_smooth))]  
         
         
         
