@@ -531,20 +531,10 @@ def generatePath2(path):
         if(section=='middle'):
             ptxs_smooth.append(path.ways_x[i+1])
             ptys_smooth.append(path.ways_y[i+1])
-        
-        
-        
-        
-        
-    print(idxs_smooth)    
-        
-    
-    
-    
     
     # Calculate the distances along the path and for each segment
     ds_seg = 0
-    segNum = 1
+    wayNum = 1
     dsts_segs = [0]
     dsts_smooth = [0]
     for i in range(1,len(ptxs_smooth),1):
@@ -564,20 +554,80 @@ def generatePath2(path):
         ds_seg += ds
         
         # Save the distances for each segment
-        if(idxs_smooth[i]!=segNum): 
+        if(idxs_smooth[i]!=wayNum): 
             dsts_segs.append(ds_seg)
             ds_seg = 0
-            segNum += 1
+            wayNum += 1
             
     # Store the distance for the final segment
     dsts_segs.append(ds_seg)
     
+    # Calculate the smooth velocities
+    wayNum = 0
+    v_running = path.ways_v[0] # intialize to start velocity
+    vels_smooth = [v_running]
+    for i in range(1,len(ptxs_smooth),1):
+        
+        if(idxs_smooth[i]!=wayNum):
+            
+            # Determine the requested delta v
+            wayNum += 1
+            v_goal = path.ways_v[wayNum]
+            delta_v_req = v_goal-v_running
+            
+            # Travel distance avalaible in this segment
+            delta_s_seg = dsts_segs[wayNum] 
+            
+            # Handle acceleration limiting
+            if(delta_v_req>0):
+                delta_v_max = -v_running+np.sqrt((v_running**2)+(2*path.a_max*delta_s_seg))
+                print(delta_v_req,delta_v_max)
+                delta_v_okay = min(delta_v_req,delta_v_max)
+            else: delta_v_okay = delta_v_req
+                
+            # Normalize the delta v per unit distance
+            delta_v_per_s = delta_v_okay/delta_s_seg
+        
+        # Update the robot's current velocity
+        delta_s = dsts_smooth[i]-dsts_smooth[i-1]
+        v_running += delta_v_per_s*delta_s
+        vels_smooth.append(v_running)
+        
+            
+        
+        
     
     
-    print(dsts_segs)
     
     
-    vels_smooth = dsts_smooth
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     oris_smooth = [90 for i in range(len(ptxs_smooth))] # don't forget discontinuity
     tims_smooth = [1 for i in range(len(ptxs_smooth))]  
@@ -684,7 +734,7 @@ def popupPtData(path,x_prior,y_prior):
         flags = True
         [x_way,flags] = gensup.safeTextEntry(flags,textFields[0]['field'],'float',vmin=0.0,vmax=path.field_x_real)
         [y_way,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=0.0,vmax=path.field_y_real)
-        [v_way,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=0.0,vmax=path.v_max/12.0)
+        [v_way,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=path.v_min/12.0,vmax=path.v_max/12.0)
         [o_way,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=0.0,vmax=360.0)
         [R_way,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=3*path.step_size)
     

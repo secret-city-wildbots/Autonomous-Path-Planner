@@ -121,6 +121,7 @@ class Path():
         # Explicit settings
         self.field_x_real = 12*52.4375 # (in) length of the field
         self.field_y_real = 12*26.9375 # (in) width of the field
+        self.v_min = 12*1.0 # (in/s) minimum robot velocity
         self.v_max = 12*15.0 # (in/s) maximum robot velocity
         self.a_max = 12*3.0 # (in/s^2) maximum robot acceleration
         self.step_size = 1.0 # (in) path step size
