@@ -118,13 +118,28 @@ class Path():
     
     def __init__(self):
         
-        # Explicit settings
-        self.field_x_real = 12*52.4375 # (in) length of the field
-        self.field_y_real = 12*26.9375 # (in) width of the field
-        self.v_min = 12*1.0 # (in/s) minimum robot velocity
-        self.v_max = 12*15.0 # (in/s) maximum robot velocity
-        self.a_max = 12*3.0 # (in/s^2) maximum robot acceleration
-        self.step_size = 1.0 # (in) path step size
+        # Load and set the defaults
+        try:
+            h_npz_defaults = np.load(dirPvars+'defaults.npz',allow_pickle=True)
+            field_x_real = h_npz_defaults['field_x_real']
+            field_y_real = h_npz_defaults['field_y_real']
+            v_min = 1.0
+            v_max = h_npz_defaults['v_max']
+            a_max = h_npz_defaults['a_max']
+            step_size = h_npz_defaults['step_size']
+        except:
+            field_x_real = 52.4375
+            field_y_real = 26.9375 
+            v_min = 1.0
+            v_max = 15.0
+            a_max = 3.0
+            step_size = 1.0
+        self.field_x_real = 12*field_x_real # (in) length of the field
+        self.field_y_real = 12*field_y_real # (in) width of the field
+        self.v_min = 12*v_min # (in/s) minimum robot velocity
+        self.v_max = 12*v_max # (in/s) maximum robot velocity
+        self.a_max = 12*a_max # (in/s^2) maximum robot acceleration
+        self.step_size = step_size # (in) path step size
         
         # Reset the path
         self.reset()
@@ -366,6 +381,16 @@ def actionApplySettings(*args):
     
     # Save the error-free entries in the correct units
     if(flags):
+        
+        # Save to the disk
+        np.savez(dirPvars+'defaults',
+                 field_x_real=field_x_real,
+                 field_y_real=field_y_real,
+                 v_max=v_max,
+                 a_max=a_max,
+                 step_size=step_size)
+        
+        # Save in memory
         path.field_x_real = 12.0*field_x_real
         path.field_y_real = 12.0*field_y_real
         path.v_max = 12.0*v_max

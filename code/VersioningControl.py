@@ -149,6 +149,10 @@ button in the upper-right corner.
 Release Notes
 -------------------------------------------------------------------------------------
 
+v***
+> User default settings will now persist between software restarts.
+> Overhauls the pathing algorithm. Multiple edge cases fixed, point spacing is now more consitent, turn radii can be entered manually, and accelleration limiting is more accuracte.
+
 v1.2.0
 > Fixes a critical bug that prevented any user-configurable settings from actually being updated via the GUI.
 > Adds acceleration limiting.
