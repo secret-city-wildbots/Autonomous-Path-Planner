@@ -138,6 +138,7 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
+> Users can now change the order of a way point.
 > Users can now mark some points as "must touch" points for later interpretation by the path follower.
 > Simplifies the GUI and fixes several bugs that could cause the interface to crash.
 > User default settings will now persist between software restarts.

@@ -1,4 +1,4 @@
-# Date: 2021-01-31
+# Date: 2021-02-01
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
@@ -343,6 +343,8 @@ def popupPtData(path,x_prior,y_prior):
     
     # Configure waypoint selection
     [x_init,y_init,v_init,o_init,R_init,T_init,way_index] = path.configureWayPoint(x_prior,y_prior)
+    if(way_index!=-1): way_order = way_index
+    else: way_order = path.numWayPoints()
     
     # Define button callbacks
     def actionClose(*args):
@@ -356,7 +358,7 @@ def popupPtData(path,x_prior,y_prior):
         
         # Check entries for errors
         flags = True
-        [_,flags] = gensup.safeTextEntry(flags,textFields[0]['field'],'int',vmin=0,vmax=path.numWayPoints())
+        [O_way,flags] = gensup.safeTextEntry(flags,textFields[0]['field'],'int',vmin=0,vmax=path.numWayPoints())
         [x_way,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=0.0,vmax=path.field_x_real)
         [y_way,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=0.0,vmax=path.field_y_real)
         [v_way,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=path.v_min/12.0,vmax=path.v_max/12.0)
@@ -370,7 +372,7 @@ def popupPtData(path,x_prior,y_prior):
         if(flags):
              
             # Add way point
-            path.addWayPoint(x_way,y_way,v_way*12,o_way,R_way,T_way,way_index)
+            path.addWayPoint(x_way,y_way,v_way*12,o_way,R_way,T_way,way_index,O_way)
             
             # Close the popup
             actionClose()
@@ -404,7 +406,7 @@ def popupPtData(path,x_prior,y_prior):
                   'Orientation (deg) [0-360]',
                   'Turn Radius (in)',
                   'Touch this Point']
-    defaults = [way_index,
+    defaults = [way_order,
                 x_init,
                 y_init,
                 v_init,
@@ -419,6 +421,7 @@ def popupPtData(path,x_prior,y_prior):
         textFields.append({'title': title, 'field': field})
     if(way_index==-1): buttonName = 'Create'
     else: buttonName = 'Edit'
+    if(way_index==-1): textFields[0]['field'].configure(state=tk.DISABLED)
     buttonSave = tk.Button(popwindow,text=buttonName,fg=guiColor_black,bg=guiColor_hotgreen,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.04*windW),command=actionSave)
     popwindow.bind('<Return>',actionSave)
     buttonDelete = tk.Button(popwindow,text='Delete',fg=guiColor_black,bg=guiColor_hotyellow,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.04*windW),command=actionDelete)

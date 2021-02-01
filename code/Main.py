@@ -1,4 +1,4 @@
-# Date: 2021-01-31
+# Date: 2021-02-01
 # Description: a path planner for FRC 2020
 #-----------------------------------------------------------------------------
 
@@ -222,7 +222,7 @@ class Path():
         
         return x_init, y_init, v_init, o_init, R_init, T_init, way_index
     
-    def addWayPoint(self,x,y,v,o,R,T,way_index):
+    def addWayPoint(self,x,y,v,o,R,T,way_index,way_order):
         
         if(way_index==-1):
             
@@ -243,6 +243,43 @@ class Path():
             self.ways_o[way_index] = o
             self.ways_R[way_index] = R
             self.ways_T[way_index] = T
+            
+            # Move a way point
+            if(way_index!=way_order):
+                ways_x = []
+                ways_y = []
+                ways_v = []
+                ways_o = []
+                ways_R = []
+                ways_T = []
+                for i in range(0,self.numWayPoints(),1):
+                    if(i==way_index): pass
+                    elif(i==way_order):
+                        ways_x.append(self.ways_x[way_index])
+                        ways_y.append(self.ways_y[way_index])
+                        ways_v.append(self.ways_v[way_index])
+                        ways_o.append(self.ways_o[way_index])
+                        ways_R.append(self.ways_R[way_index])
+                        ways_T.append(self.ways_T[way_index])
+                        ways_x.append(self.ways_x[i])
+                        ways_y.append(self.ways_y[i])
+                        ways_v.append(self.ways_v[i])
+                        ways_o.append(self.ways_o[i])
+                        ways_R.append(self.ways_R[i])
+                        ways_T.append(self.ways_T[i])
+                    else:
+                        ways_x.append(self.ways_x[i])
+                        ways_y.append(self.ways_y[i])
+                        ways_v.append(self.ways_v[i])
+                        ways_o.append(self.ways_o[i])
+                        ways_R.append(self.ways_R[i])
+                        ways_T.append(self.ways_T[i])
+                self.ways_x = ways_x
+                self.ways_y = ways_y
+                self.ways_v = ways_v
+                self.ways_o = ways_o
+                self.ways_R = ways_R
+                self.ways_T = ways_T
         
     def removeWayPoint(self,way_index):
         
