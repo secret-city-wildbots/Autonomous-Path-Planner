@@ -204,6 +204,7 @@ class Path():
             v_init = 1.0
             o_init = 0.0
             R_init = 3*self.step_size
+            T_init = False
             
         else:
             
@@ -216,10 +217,11 @@ class Path():
             v_init = (1/12)*self.ways_v[i]
             o_init = self.ways_o[i]
             R_init = self.ways_R[i]
+            T_init = self.ways_T[i]
         
-        return x_init, y_init, v_init, o_init, R_init, way_index
+        return x_init, y_init, v_init, o_init, R_init, T_init, way_index
     
-    def addWayPoint(self,x,y,v,o,R,way_index):
+    def addWayPoint(self,x,y,v,o,R,T,way_index):
         
         if(way_index==-1):
             
@@ -229,6 +231,7 @@ class Path():
             (self.ways_v).append(v)
             (self.ways_o).append(o)
             (self.ways_R).append(R)
+            (self.ways_T).append(T)
             
         else:
             
@@ -238,6 +241,7 @@ class Path():
             self.ways_v[way_index] = v
             self.ways_o[way_index] = o
             self.ways_R[way_index] = R
+            self.ways_T[way_index] = T
         
     def removeWayPoint(self,way_index):
         
@@ -254,6 +258,7 @@ class Path():
             (self.ways_v).pop(way_index)
             (self.ways_o).pop(way_index)
             (self.ways_R).pop(way_index)
+            (self.ways_T).pop(way_index)
             
     def loadWayPoints(self,file_csv):
         
@@ -268,6 +273,7 @@ class Path():
             self.ways_v = list(df['Way Velocity (in/s)'].values)
             self.ways_o = list(df['Way Orientation (deg)'].values)
             self.ways_R = list(df['Way Turn Radius (in)'].values)
+            self.ways_T = list(df['Touch this Point'].values)
             
             # Remove dummy values saved in the .csv file
             while(True):
@@ -278,6 +284,7 @@ class Path():
                     self.ways_v.pop(-1)
                     self.ways_o.pop(-1)
                     self.ways_R.pop(-1)
+                    self.ways_T.pop(-1)
                     
             # Record the filename
             filename = file_csv.split('/')[-1]
@@ -291,8 +298,7 @@ class Path():
         # Calculate the current number of way points
         return len(self.ways_x)
             
-
-    def updateSmoothPath(self,ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth):
+    def updateSmoothPath(self,ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth,tchs_smooth):
 
         # Update the smooth path
         self.smooths_x = ptxs_smooth
@@ -303,6 +309,7 @@ class Path():
         self.total_d = dsts_smooth[-1]
         self.smooths_t = tims_smooth
         self.total_t = tims_smooth[-1]
+        self.smooths_T = tchs_smooth
         
     def numSmoothPoints(self):
         

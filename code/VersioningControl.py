@@ -138,6 +138,7 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
+> Users can now mark some points as "must touch" points for later interpretation by the path follower.
 > Simplifies the GUI and fixes several bugs that could cause the interface to crash.
 > User default settings will now persist between software restarts.
 > Overhauls the pathing algorithm. Multiple edge cases fixed, point spacing is now more consitent, turn radii can be entered manually, and accelleration limiting is more accuracte.

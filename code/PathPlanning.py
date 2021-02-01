@@ -90,6 +90,7 @@ def generatePath(path):
     idxs_smooth = [1] # the waypoint the smooth point is trying to reach
     ptxs_smooth = [path.ways_x[0]]
     ptys_smooth = [path.ways_y[0]]
+    tchs_smooth = [0]
     section = 'middle'
     rx = None
     ry = None
@@ -198,6 +199,10 @@ def generatePath(path):
                 idxs_smooth.append(i+1)
                 ptxs_smooth.append(nx)
                 ptys_smooth.append(ny)
+                if(flag_nxt):
+                    if(path.ways_T[i+1]>0.5): tchs_smooth.append(1)
+                    else: tchs_smooth.append(0)
+                else: tchs_smooth.append(0)
                 
                 # Check if this segment of the path is complete
                 if(flag_nxt): break
@@ -209,6 +214,7 @@ def generatePath(path):
         if(section=='middle'):
             ptxs_smooth.append(path.ways_x[i+1])
             ptys_smooth.append(path.ways_y[i+1])
+            tchs_smooth.append(0)
     
     # Calculate the distances along the path and for each segment
     ds_seg = 0
@@ -318,60 +324,11 @@ def generatePath(path):
         oris_smooth.append(o_running%360)
     
     # Update the path
-    path.updateSmoothPath(ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth)
+    path.updateSmoothPath(ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth,tchs_smooth)
     
     return path
 
 #-----------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 def popupPtData(path,x_prior,y_prior):
     """
@@ -385,7 +342,7 @@ def popupPtData(path,x_prior,y_prior):
     """
     
     # Configure waypoint selection
-    [x_init,y_init,v_init,o_init,R_init,way_index] = path.configureWayPoint(x_prior,y_prior)
+    [x_init,y_init,v_init,o_init,R_init,T_init,way_index] = path.configureWayPoint(x_prior,y_prior)
     
     # Define button callbacks
     def actionClose(*args):
@@ -399,17 +356,21 @@ def popupPtData(path,x_prior,y_prior):
         
         # Check entries for errors
         flags = True
-        [x_way,flags] = gensup.safeTextEntry(flags,textFields[0]['field'],'float',vmin=0.0,vmax=path.field_x_real)
-        [y_way,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=0.0,vmax=path.field_y_real)
-        [v_way,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=path.v_min/12.0,vmax=path.v_max/12.0)
-        [o_way,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=0.0,vmax=360.0)
-        [R_way,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=3*path.step_size)
+        [_,flags] = gensup.safeTextEntry(flags,textFields[0]['field'],'int',vmin=0,vmax=path.numWayPoints())
+        [x_way,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=0.0,vmax=path.field_x_real)
+        [y_way,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=0.0,vmax=path.field_y_real)
+        [v_way,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=path.v_min/12.0,vmax=path.v_max/12.0)
+        [o_way,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=0.0,vmax=360.0)
+        [R_way,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=3*path.step_size)
+        [T_way,flags] = gensup.safeTextEntry(flags,textFields[6]['field'],'bool')
+        if(T_way): T_way = 1
+        else: T_way = 0
     
         # Save the error-free entries in the correct units
         if(flags):
              
             # Add way point
-            path.addWayPoint(x_way,y_way,v_way*12,o_way,R_way,way_index)
+            path.addWayPoint(x_way,y_way,v_way*12,o_way,R_way,T_way,way_index)
             
             # Close the popup
             actionClose()
@@ -424,7 +385,7 @@ def popupPtData(path,x_prior,y_prior):
     popwindow = tk.Toplevel()
     popwindow.title('Waypoint')
     windW = 250 # window width
-    windH = 500 # window height 
+    windH = 700 # window height 
     popwindow.geometry(str(windW)+'x'+str(windH))
     popwindow.configure(background=guiColor_offwhite)
     popwindow.resizable(width=False, height=False)
@@ -436,16 +397,20 @@ def popupPtData(path,x_prior,y_prior):
     popwindow.protocol('WM_DELETE_WINDOW',actionClose)
     
     # Define the fields
-    fieldNames = ['X Position (in)',
+    fieldNames = ['Order',
+                  'X Position (in)',
                   'Y Position (in)',
                   'Velocity (ft/s)',
                   'Orientation (deg) [0-360]',
-                  'Turn Radius (in)']
-    defaults = [x_init,
+                  'Turn Radius (in)',
+                  'Touch this Point']
+    defaults = [way_index,
+                x_init,
                 y_init,
                 v_init,
                 o_init,
-                R_init]
+                R_init,
+                T_init>0.5]
     
     # Set up the elements
     textFields = []
@@ -462,7 +427,7 @@ def popupPtData(path,x_prior,y_prior):
     for i in range(0,len(textFields),1):
         textFields[i]['title'].pack(fill='both')
         textFields[i]['field'].pack()
-    buttonSave.pack(pady=10)
+    buttonSave.pack(pady=20)
     buttonDelete.pack(pady=10)
     
     # Run the GUI
@@ -696,7 +661,9 @@ def definePath(path,file_I,file_robot):
                 # Display the smooth path
                 ptColors = []
                 for i in range(0,path.numSmoothPoints(),1):
-                    ptColor = plt.cm.plasma(path.smooths_v[i]/path.v_max)
+                    if(path.smooths_T[i]>0.5):
+                        ptColor = [1,0,0] # color "must touch points red"
+                    else: ptColor = plt.cm.plasma(path.smooths_v[i]/path.v_max)
                     ptColors.append(np.array([ptColor[0],ptColor[1],ptColor[2]]))
                 h_smooths = ax.scatter(path.scale_pi*np.array(path.smooths_x),
                                        (path.field_y_pixels)*np.ones((len(path.smooths_y)),float) - path.scale_pi*np.array(path.smooths_y),
@@ -729,11 +696,13 @@ def definePath(path,file_I,file_robot):
                                         "Y (in)": path.smooths_y,
                                         "Velocity (in/s)": path.smooths_v,
                                         "Orientation (deg)": path.smooths_o,
+                                        "Touch": path.smooths_T,
                                         "Way X (in)": path.ways_x + nComp*[''],
                                         "Way Y (in)": path.ways_y + nComp*[''],
                                         "Way Velocity (in/s)": path.ways_v + nComp*[''],
                                         "Way Orientation (deg)": path.ways_o + nComp*[''],
-                                        "Way Turn Radius (in)": path.ways_R + nComp*['']})
+                                        "Way Turn Radius (in)": path.ways_R + nComp*[''],
+                                        "Touch this Point": path.ways_T + nComp*['']})
             df.to_csv("../robot paths/%s.csv" %(filename), sep=',',index=False)
             
             # Save an image of the path planning figure
