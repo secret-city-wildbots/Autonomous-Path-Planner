@@ -1,10 +1,10 @@
-# Date: 2020-10-11
+# Date: 2021-02-01
 # Description: a path planner for FRC 2020
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '1.2.0' # breaking.major-feature-add.minor-feature-or-bug-fix
-versionType = 'beta' # options are "beta" or "release"
+versionNumber = '2.0.0' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionType = 'release' # options are "beta" or "release"
 print('Loading v%s...' %(versionNumber))
 
 # Ignore future and depreciation warnings when not in development
@@ -78,6 +78,7 @@ guiColor_black = h_npz_settings['guiColor_black']
 guiColor_white = h_npz_settings['guiColor_white']
 guiColor_offwhite = h_npz_settings['guiColor_offwhite']
 guiColor_hotpink = h_npz_settings['guiColor_hotpink']
+guiColor_hotgreen = h_npz_settings['guiColor_hotgreen']
 guiFontSize_large = h_npz_settings['guiFontSize_large']
 guiFontSize_small = h_npz_settings['guiFontSize_small']
 guiFontType_normal = h_npz_settings['guiFontType_normal']
@@ -118,14 +119,28 @@ class Path():
     
     def __init__(self):
         
-        # Explicit settings
-        self.field_x_real = 12*52.4375 # (in) length of the field
-        self.field_y_real = 12*26.9375 # (in) width of the field
-        self.v_max = 12*15.0 # (in/s) maximum robot velocity
-        self.a_max = 12*3.0 # (in/s^2) maximum robot acceleration
-        self.step_size = 1.0 # (in) path step size
-        self.radius_min = 12.0 # (in) minimum robot turn radius
-        self.radius_max = 100.0 # (in) maximum robot turn radius
+        # Load and set the defaults
+        try:
+            h_npz_defaults = np.load(dirPvars+'defaults.npz',allow_pickle=True)
+            field_x_real = h_npz_defaults['field_x_real']
+            field_y_real = h_npz_defaults['field_y_real']
+            v_min = 1.0
+            v_max = h_npz_defaults['v_max']
+            a_max = h_npz_defaults['a_max']
+            step_size = h_npz_defaults['step_size']
+        except:
+            field_x_real = 52.4375
+            field_y_real = 26.9375 
+            v_min = 1.0
+            v_max = 15.0
+            a_max = 3.0
+            step_size = 1.0
+        self.field_x_real = 12*field_x_real # (in) length of the field
+        self.field_y_real = 12*field_y_real # (in) width of the field
+        self.v_min = 12*v_min # (in/s) minimum robot velocity
+        self.v_max = 12*v_max # (in/s) maximum robot velocity
+        self.a_max = 12*a_max # (in/s^2) maximum robot acceleration
+        self.step_size = step_size # (in) path step size
         
         # Reset the path
         self.reset()
@@ -143,6 +158,8 @@ class Path():
         self.ways_y = [] # (in) list of way point y positions
         self.ways_v = [] # (in/s) list of way point velocities
         self.ways_o = [] # (deg) list of way point orientations
+        self.ways_R = [] # (in) list of way point turn radii
+        self.ways_T = [] # (in) list of way point touch priority
         
         # Smooth path
         self.smooths_x = [] # (in) list of smooth x positions
@@ -187,6 +204,8 @@ class Path():
             y_init = np.round(y_prior,2) # (ft)
             v_init = 1.0
             o_init = 0.0
+            R_init = 3*self.step_size
+            T_init = False
             
         else:
             
@@ -198,10 +217,12 @@ class Path():
             y_init = np.round(self.ways_y[i],2) # (in)
             v_init = (1/12)*self.ways_v[i]
             o_init = self.ways_o[i]
+            R_init = self.ways_R[i]
+            T_init = self.ways_T[i]
         
-        return x_init, y_init, v_init, o_init, way_index
+        return x_init, y_init, v_init, o_init, R_init, T_init, way_index
     
-    def addWayPoint(self,x,y,v,o,way_index):
+    def addWayPoint(self,x,y,v,o,R,T,way_index,way_order):
         
         if(way_index==-1):
             
@@ -210,6 +231,8 @@ class Path():
             (self.ways_y).append(y)
             (self.ways_v).append(v)
             (self.ways_o).append(o)
+            (self.ways_R).append(R)
+            (self.ways_T).append(T)
             
         else:
             
@@ -218,6 +241,45 @@ class Path():
             self.ways_y[way_index] = y
             self.ways_v[way_index] = v
             self.ways_o[way_index] = o
+            self.ways_R[way_index] = R
+            self.ways_T[way_index] = T
+            
+            # Move a way point
+            if(way_index!=way_order):
+                ways_x = []
+                ways_y = []
+                ways_v = []
+                ways_o = []
+                ways_R = []
+                ways_T = []
+                for i in range(0,self.numWayPoints(),1):
+                    if(i==way_index): pass
+                    elif(i==way_order):
+                        ways_x.append(self.ways_x[way_index])
+                        ways_y.append(self.ways_y[way_index])
+                        ways_v.append(self.ways_v[way_index])
+                        ways_o.append(self.ways_o[way_index])
+                        ways_R.append(self.ways_R[way_index])
+                        ways_T.append(self.ways_T[way_index])
+                        ways_x.append(self.ways_x[i])
+                        ways_y.append(self.ways_y[i])
+                        ways_v.append(self.ways_v[i])
+                        ways_o.append(self.ways_o[i])
+                        ways_R.append(self.ways_R[i])
+                        ways_T.append(self.ways_T[i])
+                    else:
+                        ways_x.append(self.ways_x[i])
+                        ways_y.append(self.ways_y[i])
+                        ways_v.append(self.ways_v[i])
+                        ways_o.append(self.ways_o[i])
+                        ways_R.append(self.ways_R[i])
+                        ways_T.append(self.ways_T[i])
+                self.ways_x = ways_x
+                self.ways_y = ways_y
+                self.ways_v = ways_v
+                self.ways_o = ways_o
+                self.ways_R = ways_R
+                self.ways_T = ways_T
         
     def removeWayPoint(self,way_index):
         
@@ -233,6 +295,8 @@ class Path():
             (self.ways_y).pop(way_index)
             (self.ways_v).pop(way_index)
             (self.ways_o).pop(way_index)
+            (self.ways_R).pop(way_index)
+            (self.ways_T).pop(way_index)
             
     def loadWayPoints(self,file_csv):
         
@@ -246,6 +310,8 @@ class Path():
             self.ways_y = list(df['Way Y (in)'].values)
             self.ways_v = list(df['Way Velocity (in/s)'].values)
             self.ways_o = list(df['Way Orientation (deg)'].values)
+            self.ways_R = list(df['Way Turn Radius (in)'].values)
+            self.ways_T = list(df['Touch this Point'].values)
             
             # Remove dummy values saved in the .csv file
             while(True):
@@ -255,6 +321,8 @@ class Path():
                     self.ways_y.pop(-1)
                     self.ways_v.pop(-1)
                     self.ways_o.pop(-1)
+                    self.ways_R.pop(-1)
+                    self.ways_T.pop(-1)
                     
             # Record the filename
             filename = file_csv.split('/')[-1]
@@ -268,8 +336,7 @@ class Path():
         # Calculate the current number of way points
         return len(self.ways_x)
             
-
-    def updateSmoothPath(self,ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth):
+    def updateSmoothPath(self,ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth,tchs_smooth):
 
         # Update the smooth path
         self.smooths_x = ptxs_smooth
@@ -280,6 +347,7 @@ class Path():
         self.total_d = dsts_smooth[-1]
         self.smooths_t = tims_smooth
         self.total_t = tims_smooth[-1]
+        self.smooths_T = tchs_smooth
         
     def numSmoothPoints(self):
         
@@ -305,20 +373,6 @@ def easyPlace(h,x,y):
     elif((x>=0)&(y<0)): h.place(x=abs(x)*windW,y=windH-abs(y)*windH,anchor=tk.SW)
     elif((x<0)&(y<0)): h.place(x=windW-abs(x)*windW,y=windH-abs(y)*windH,anchor=tk.SE)
     
-def lockMenus(topMenus,flag_lock): 
-    """
-    Simplifies the locking and un-locking process for the top menus
-    """           
-            
-    # Set flags for locking an unlocking the menus
-    if(flag_lock==True): lock = tk.DISABLED
-    else: lock = tk.NORMAL 
-    
-    # Lock or unlock specific sets of menus
-    for menu in topMenus:
-        if(menu=='File'):
-            menuFile.entryconfig('Load Field Map',state=lock) 
-
 #-----------------------------------------------------------------------------
 
 def actionNope(*args):
@@ -354,20 +408,26 @@ def actionApplySettings(*args):
     [field_x_real,flags] = gensup.safeTextEntry(flags,textFields[0]['field'],'float',vmin=0.0,vmax=100.0)
     [field_y_real,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=0.0,vmax=100.0)
     [v_max,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=1.0,vmax=30.0)
-    [step_size,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=1.0,vmax=100.0)
-    [radius_min,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=1.0,vmax=1000.0)
-    [radius_max,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=1.1*radius_min,vmax=1000.0)
-    [a_max,flags] = gensup.safeTextEntry(flags,textFields[6]['field'],'float',vmin=0.5,vmax=100.0)
+    [a_max,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=0.5,vmax=100.0)
+    [step_size,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=1.0,vmax=100.0)
     
     # Save the error-free entries in the correct units
     if(flags):
+        
+        # Save to the disk
+        np.savez(dirPvars+'defaults',
+                 field_x_real=field_x_real,
+                 field_y_real=field_y_real,
+                 v_max=v_max,
+                 a_max=a_max,
+                 step_size=step_size)
+        
+        # Save in memory
         path.field_x_real = 12.0*field_x_real
         path.field_y_real = 12.0*field_y_real
         path.v_max = 12.0*v_max
-        path.step_size =step_size
-        path.radius_min = radius_min
-        path.radius_max = radius_max
         path.a_max = 12.0*a_max
+        path.step_size =step_size
         
 #-----------------------------------------------------------------------------
 
@@ -376,31 +436,37 @@ def actionLoadField(*args):
     Loads the field map and allows the user to start planning a path
     """
     
+    # Lock the GUI
+    buttonPlan.configure(bg=guiColor_offwhite,state=tk.DISABLED)
+    
     # Reinitialize the path
     path.reset()
     
     # Ask the user to load a field map
     file_I = filedialog.askopenfilename(initialdir='../field drawings/',title = 'Select a Field Drawing',filetypes=recognizedImageExtensions)
     
-    # Ask the user to load a robot model
-    file_robot = filedialog.askopenfilename(initialdir='../robot models/',title = 'Select a Robot Model',filetypes=recognizedImageExtensions)
+    if(file_I!=''):
     
-    # Ask the user to load a previous path
-    file_csv = filedialog.askopenfilename(initialdir='../robot paths/',title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
-    path.loadWayPoints(file_csv)
+        # Ask the user to load a robot model
+        file_robot = filedialog.askopenfilename(initialdir='../robot models/',title = 'Select a Robot Model',filetypes=recognizedImageExtensions)
+        
+        # Ask the user to load a previous path
+        file_csv = filedialog.askopenfilename(initialdir='../robot paths/',title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
+        path.loadWayPoints(file_csv)
+        
+        # Start the path planner
+        plan.definePath(path,file_I,file_robot)
     
-    # Start the path planner
-    lockMenus(['File'],True)
-    plan.definePath(path,file_I,file_robot)
-    lockMenus(['File'],False)
+    # Reset the GUI
+    buttonPlan.configure(bg=guiColor_hotgreen,state=tk.NORMAL)
     
 #-----------------------------------------------------------------------------
 
 # Open the GUI window
 guiwindow = tk.Tk()
 guiwindow.title(softwareName)
-windW = int(0.30*min(1080,minScrnDim)) # window width
-windH = int(0.75*min(1080,minScrnDim)) # window height 
+windW = int(0.28*min(1080,minScrnDim)) # window width
+windH = int(0.65*min(1080,minScrnDim)) # window height 
 guiwindow.geometry(str(windW)+'x'+str(windH))
 guiwindow.configure(background=guiColor_offwhite)
 guiwindow.resizable(width=False, height=False)
@@ -420,17 +486,13 @@ gensup.easyTkImageDisplay(guiwindow,logo,I_logo,forceSize=[int(564*guiScaling),i
 fieldNames = ['Field Length (ft)',
               'Field Width (ft)',
               'Maximum Robot Velocity (ft/s)',
-              'Step Size (in)',
-              'Minimum Turn Radius (in)',
-              'Maximum Turn Radius (in)',
-              'Maximum Robot Acceleration (ft/s²)']
+              'Maximum Robot Acceleration (ft/s²)',
+              'Step Size (in)']
 defaults = [path.field_x_real/12.0,
             path.field_y_real/12.0,
             path.v_max/12.0,
-            path.step_size,
-            path.radius_min,
-            path.radius_max,
-            path.a_max/12.0]
+            path.a_max/12.0,
+            path.step_size]
 
 # Set up the settings elements
 textFields = []
@@ -438,23 +500,15 @@ for i in range(0,len(fieldNames),1):
     [title,field] = gensup.easyTextField(guiwindow,windW,fieldNames[i],str(defaults[i]))
     textFields.append({'title': title, 'field': field})
 buttonApply = tk.Button(guiwindow,text='Apply',fg=guiColor_black,bg=guiColor_hotpink,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.02*windW),command=actionApplySettings)
-
-# Set up the menu bar
-menubar = tk.Menu(guiwindow)
-menuFile = tk.Menu(menubar, tearoff=0)
-menuFile.add_command(label='Load Field Map',command=actionLoadField)
-menuFile.add_command(label='Quit',command=actionQuit)
-menubar.add_cascade(label='File',menu=menuFile)
-guiwindow.config(menu=menubar)
+buttonPlan = tk.Button(guiwindow,text='Plan',fg=guiColor_black,bg=guiColor_hotgreen,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.02*windW),command=actionLoadField)
 
 # Place all elements
 for i in range(0,len(textFields),1):
     textFields[i]['title'].pack(fill='both')
     textFields[i]['field'].pack()
-buttonApply.pack(pady=20)
-logo.pack(pady=20)
-
-# Final GUI initializations
+buttonApply.pack(pady=10)
+buttonPlan.pack(pady=10)
+logo.pack(pady=10)
 
 # Run the GUI window
 if((__name__ == '__main__') and not flag_upgraded):
