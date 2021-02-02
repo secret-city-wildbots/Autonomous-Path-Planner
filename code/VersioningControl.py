@@ -137,7 +137,7 @@ FIRST Robotics Team 4265
 Release Notes
 -------------------------------------------------------------------------------------
 
-v***
+v2.0.0
 > Users can now change the order of a way point.
 > Users can now mark some points as "must touch" points for later interpretation by the path follower.
 > Simplifies the GUI and fixes several bugs that could cause the interface to crash.
