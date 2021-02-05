@@ -137,6 +137,9 @@ FIRST Robotics Team 4265
 Release Notes
 -------------------------------------------------------------------------------------
 
+v***
+> Fixes a bug which can occur during waypoint insertion.
+
 v2.0.0
 > Users can now change the order of a way point.
 > Users can now mark some points as "must touch" points for later interpretation by the path follower.

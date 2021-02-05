@@ -596,8 +596,10 @@ def definePath(path,file_I,file_robot):
                     [x_prior,y_prior] = event.xdata, event.ydata 
                     
                     # Display popup window
-                    popupPtData(path,x_prior,y_prior)
-                    add_state = 2
+                    try:
+                        popupPtData(path,x_prior,y_prior)
+                        add_state = 2
+                    except: add_state=0 # ignore
                 
     # Set up mouse button unclick callbacks
     def mouseUnClick(event):
