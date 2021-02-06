@@ -1,4 +1,4 @@
-# Date: 2021-02-01
+# Date: 2021-02-05
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
@@ -120,7 +120,12 @@ def generatePath(path):
         # Check that the waypoints aren't closer than the step size
         dw = np.sqrt(((bx-ax)**2)+((by-ay)**2))
         if(dw>path.step_size):
+            timeout = 0
             while(True):
+                
+                # Check and update the timeout counter
+                if(timeout>10000): raise Exception('no solution')
+                timeout += 1
                 
                 if(section=='begarc'):
                     
@@ -656,32 +661,39 @@ def definePath(path,file_I,file_robot):
             if(path.numWayPoints()>1):
                 
                 # Calculate the path
-                path = generatePath(path)
+                try: 
+                    path = generatePath(path)
+                    flag_solution = True
+                except: 
+                    tk.messagebox.showerror('4265 Path Planner','No pathing solution found, please modify the waypoints')
+                    flag_solution = False
                 
-                # Display the path metrics
-                details_start = 'start at (%0.2f in, %0.2f in, %0.0f°)' %(path.smooths_x[0],path.smooths_y[0],path.smooths_o[0])
-                details_end = 'end at (%0.2f in, %0.2f in, %0.0f°) predicted travel time: %0.2f s' %(path.smooths_x[-1],path.smooths_y[-1],path.smooths_o[-1],path.total_t)
-                plt.xlabel('X: Down Field\n%s\n%s' %(details_start,details_end))
+                if(flag_solution):
                 
-                # Display the smooth path
-                ptColors = []
-                for i in range(0,path.numSmoothPoints(),1):
-                    if(path.smooths_T[i]>0.5):
-                        ptColor = [1,0,0] # color "must touch points red"
-                    else: ptColor = plt.cm.plasma(path.smooths_v[i]/path.v_max)
-                    ptColors.append(np.array([ptColor[0],ptColor[1],ptColor[2]]))
-                h_smooths = ax.scatter(path.scale_pi*np.array(path.smooths_x),
-                                       (path.field_y_pixels)*np.ones((len(path.smooths_y)),float) - path.scale_pi*np.array(path.smooths_y),
-                                       color=np.array(ptColors),marker='.',s=200)
-                
-                # Display the orientation overlays
-                for i in range(0,path.numSmoothPoints(),1):
-                    xa = path.smooths_x[i]*path.scale_pi
-                    ya = path.field_y_pixels-(path.smooths_y[i]*path.scale_pi)
-                    oa = np.pi*path.smooths_o[i]/180.0
-                    xb = xa + (path.step_size*path.scale_pi)*np.cos(oa)
-                    yb = ya - (path.step_size*path.scale_pi)*np.sin(oa)
-                    hs_ori.append(plt.plot(np.array([xa,xb]),np.array([ya,yb]),color=np.array(ptColors[i])))
+                    # Display the path metrics
+                    details_start = 'start at (%0.2f in, %0.2f in, %0.0f°)' %(path.smooths_x[0],path.smooths_y[0],path.smooths_o[0])
+                    details_end = 'end at (%0.2f in, %0.2f in, %0.0f°) predicted travel time: %0.2f s' %(path.smooths_x[-1],path.smooths_y[-1],path.smooths_o[-1],path.total_t)
+                    plt.xlabel('X: Down Field\n%s\n%s' %(details_start,details_end))
+                    
+                    # Display the smooth path
+                    ptColors = []
+                    for i in range(0,path.numSmoothPoints(),1):
+                        if(path.smooths_T[i]>0.5):
+                            ptColor = [1,0,0] # color "must touch points red"
+                        else: ptColor = plt.cm.plasma(path.smooths_v[i]/path.v_max)
+                        ptColors.append(np.array([ptColor[0],ptColor[1],ptColor[2]]))
+                    h_smooths = ax.scatter(path.scale_pi*np.array(path.smooths_x),
+                                           (path.field_y_pixels)*np.ones((len(path.smooths_y)),float) - path.scale_pi*np.array(path.smooths_y),
+                                           color=np.array(ptColors),marker='.',s=200)
+                    
+                    # Display the orientation overlays
+                    for i in range(0,path.numSmoothPoints(),1):
+                        xa = path.smooths_x[i]*path.scale_pi
+                        ya = path.field_y_pixels-(path.smooths_y[i]*path.scale_pi)
+                        oa = np.pi*path.smooths_o[i]/180.0
+                        xb = xa + (path.step_size*path.scale_pi)*np.cos(oa)
+                        yb = ya - (path.step_size*path.scale_pi)*np.sin(oa)
+                        hs_ori.append(plt.plot(np.array([xa,xb]),np.array([ya,yb]),color=np.array(ptColors[i])))
             
             # Reset
             add_state = 0 

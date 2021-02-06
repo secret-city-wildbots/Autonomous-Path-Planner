@@ -130,6 +130,7 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
+> The planner now times out if no pathing solution can be found.
 > Adds a manual DPI scaling override to improve rendering on newer laptop screens.
 > Improves the installation process.
 > Fixes a bug which can occur during waypoint insertion.
