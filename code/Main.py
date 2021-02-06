@@ -1,10 +1,10 @@
-# Date: 2021-02-01
+# Date: 2021-02-05
 # Description: a path planner for FRC 2020
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.0.1' # breaking.major-feature-add.minor-feature-or-bug-fix
-versionType = 'beta' # options are "beta" or "release"
+versionNumber = '2.0.2' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionType = 'release' # options are "beta" or "release"
 print('Loading v%s...' %(versionNumber))
 
 # Ignore future and depreciation warnings when not in development
@@ -41,6 +41,8 @@ print('RAM available: %i GB \n' %(ram))
 
 # Perform initial installation if necessary
 import VersioningControl as version # functions to handle software updates
+import sys # system
+flag_upgraded = False
 if(versionType=='release'):
     
     # Automatic installation
@@ -49,10 +51,8 @@ if(versionType=='release'):
     # Update the readme file
     flag_upgraded = version.upgrade(versionNumber)
     
-    # Restart the software if the software has been upgraded
-    if(flag_upgraded): raise Exception('restart required')
-    
-else: flag_upgraded = False
+    # Exit promptly
+    if(flag_upgraded): sys.exit()
 
 #-----------------------------------------------------------------------------
 
@@ -62,6 +62,7 @@ import math # additional math functionality
 import matplotlib # Matplotlib module
 import matplotlib.pyplot as plt # Matplotlib plotting functionality
 import pandas # data handling toolbox
+import time # time related functions
 import tkinter as tk # TkInter UI backbone
 from tkinter import filedialog # TkInter file browsers
 from tkinter import messagebox # TkInter popup windows
@@ -84,6 +85,12 @@ guiFontSize_small = h_npz_settings['guiFontSize_small']
 guiFontType_normal = h_npz_settings['guiFontType_normal']
 guiFontType_uniform = h_npz_settings['guiFontType_uniform']
 
+# Load defaults
+try: h_npz_defaults = np.load(dirPvars+'defaults.npz',allow_pickle=True)
+except: pass
+try: dpiScaling = h_npz_defaults['dpiScaling']
+except: dpiScaling = 100.0
+
 #-----------------------------------------------------------------------------
 
 # Close previous windows
@@ -103,6 +110,8 @@ plt.rcParams['keymap.save'] = '' # disable matplotlib hotkeys
 if(ostype=='Linux'): matplotlib.use('TkAgg') # call the correct backend when installed on Linux
 
 # Adjust dpi and font settings based on screen resolution
+scrnW *= float(dpiScaling/100.0)
+scrnH *= float(dpiScaling/100.0)
 minScrnDim = min(scrnW,scrnH) # smallest screen dimension
 guiScaling = min(1.0,minScrnDim/1080) # scaling factor for the user interface
 if(scrnW*scrnH<(1.1*1920*1080)): plt.rcParams.update({'figure.dpi': 50})
@@ -128,6 +137,8 @@ class Path():
             v_max = h_npz_defaults['v_max']
             a_max = h_npz_defaults['a_max']
             step_size = h_npz_defaults['step_size']
+            try: dpiScaling = h_npz_defaults['dpiScaling']
+            except: dpiScaling = 100.0 # backwards compatibility
         except:
             field_x_real = 52.4375
             field_y_real = 26.9375 
@@ -135,12 +146,14 @@ class Path():
             v_max = 15.0
             a_max = 3.0
             step_size = 1.0
+            dpiScaling = 100.0
         self.field_x_real = 12*field_x_real # (in) length of the field
         self.field_y_real = 12*field_y_real # (in) width of the field
         self.v_min = 12*v_min # (in/s) minimum robot velocity
         self.v_max = 12*v_max # (in/s) maximum robot velocity
         self.a_max = 12*a_max # (in/s^2) maximum robot acceleration
         self.step_size = step_size # (in) path step size
+        self.dpiScaling = dpiScaling # Windows DPI scaling setting
         
         # Reset the path
         self.reset()
@@ -410,6 +423,7 @@ def actionApplySettings(*args):
     [v_max,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=1.0,vmax=30.0)
     [a_max,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=0.5,vmax=100.0)
     [step_size,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=1.0,vmax=100.0)
+    [dpiScaling,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=100.0)
     
     # Save the error-free entries in the correct units
     if(flags):
@@ -420,7 +434,8 @@ def actionApplySettings(*args):
                  field_y_real=field_y_real,
                  v_max=v_max,
                  a_max=a_max,
-                 step_size=step_size)
+                 step_size=step_size,
+                 dpiScaling=dpiScaling)
         
         # Save in memory
         path.field_x_real = 12.0*field_x_real
@@ -428,6 +443,7 @@ def actionApplySettings(*args):
         path.v_max = 12.0*v_max
         path.a_max = 12.0*a_max
         path.step_size =step_size
+        path.dpiScaling = dpiScaling
         
 #-----------------------------------------------------------------------------
 
@@ -487,12 +503,14 @@ fieldNames = ['Field Length (ft)',
               'Field Width (ft)',
               'Maximum Robot Velocity (ft/s)',
               'Maximum Robot Acceleration (ft/s²)',
-              'Step Size (in)']
+              'Step Size (in)',
+              'Windows DPI Scaling (%)']
 defaults = [path.field_x_real/12.0,
             path.field_y_real/12.0,
             path.v_max/12.0,
             path.a_max/12.0,
-            path.step_size]
+            path.step_size,
+            path.dpiScaling]
 
 # Set up the settings elements
 textFields = []
@@ -515,4 +533,5 @@ if((__name__ == '__main__') and not flag_upgraded):
     plt.ion()
     gensup.flushMatplotlib()
     guiwindow.mainloop()
-else: plt.pause(10.0) # allow the users to read any error messages
+    sys.exit()
+else: time.sleep(10.0) # allow the users to read any error messages
