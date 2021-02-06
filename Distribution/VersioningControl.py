@@ -1,4 +1,4 @@
-# Date: 2020-06-11
+# Date: 2021-02-05
 # Description: auto-generates the readme.txt file and handle software upgrades
 # and installation
 #-----------------------------------------------------------------------------
@@ -34,11 +34,6 @@ def install():
         # Indicate that the installation is begining 
         print('Installing the 4265 Path Planner...')
         
-        # Ask the user which Operating System they are using 
-        userInput = messagebox.askyesno(' 4265 Path Planner','Are you installing on a Linux system?')
-        if(userInput): ostype = 'Linux'
-        else: ostype = 'Windows-Mac'
-        
         # Create always-local directories
         try: os.mkdir(dirPvars)
         except: pass
@@ -50,21 +45,19 @@ def install():
         except: pass
     
         # Save the Operating System information
-        np.save(dirPvars+'ostype.npy',ostype)
+        np.save(dirPvars+'ostype.npy','Windows-Mac')
             
         # Move supporting files to the correct folders
         os.system('move '+'settings.npz'+' "'+'../vars'+'"')
         os.system('move '+'graphic_4265.png'+' "'+'../vars'+'"')
         
-        
         # Notify the user of successful installation
         instructions = 'Next Steps:\n'
-        instructions += '1. The software upgrade process will begin automatically.\n'
-        instructions += '2. The software will close.\n'
-        instructions += '3. Double-click the "4265 Path Planned.exe" file or create a shortcut.\n'
-        instructions += '4. Review the readme file.\n'
+        instructions += '1. The software will automatically complete the rest of the installation process and then close.\n'
+        instructions += '2. Double-click the "4265 Path Planner.exe" file or create a shortcut.\n'
+        instructions += '3. Review the readme file.\n'
+        print(instructions)
         messagebox.showinfo('Installation Instructions',instructions)
-        print('Initial installation complete.')
 
 #-----------------------------------------------------------------------------
 
@@ -103,10 +96,9 @@ def upgrade(versionNumber_current):
         h_readme.close() 
         
         # Report out that the software was upgraded
-        print('\nUpgrade to v%s complete. Your settings files have been automatically upgraded.' %(versionNumber_current))
-        print('The software will close automatically in 10 seconds...')
-        print('Refer to the changelog in the readme.txt file for any additional instructions.')
-        print('\n\n\n\n')
+        notification = 'Upgrade to v%s complete. Refer to the readme.txt file for any additional instructions. The software will close automatically in 10 seconds...' %(versionNumber_current)
+        print('\n'+notification+'\n')
+        messagebox.showwarning('4265 Path Planner',notification)
         flag_upgraded = True
         
     else: flag_upgraded = False
@@ -136,6 +128,13 @@ FIRST Robotics Team 4265
 -------------------------------------------------------------------------------------
 Release Notes
 -------------------------------------------------------------------------------------
+
+v20.0.2
+> Allows users to enter a minimum robot velocity of 0 ft/s.
+> The planner now times out if no pathing solution can be found.
+> Adds a manual DPI scaling override to improve rendering on newer laptop screens.
+> Improves the installation process.
+> Fixes a bug which can occur during waypoint insertion.
 
 v2.0.0
 > Users can now change the order of a way point.
