@@ -133,7 +133,7 @@ class Path():
             h_npz_defaults = np.load(dirPvars+'defaults.npz',allow_pickle=True)
             field_x_real = h_npz_defaults['field_x_real']
             field_y_real = h_npz_defaults['field_y_real']
-            v_min = 1.0
+            v_min = 0.0
             v_max = h_npz_defaults['v_max']
             a_max = h_npz_defaults['a_max']
             step_size = h_npz_defaults['step_size']
