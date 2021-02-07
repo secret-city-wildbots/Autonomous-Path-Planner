@@ -130,6 +130,8 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
+> Fixes critical bugs which occurred when zero waypoint velocities were entered.
+> The robot will now accelerate as hard as possible if it missed its previous velocity waypoint and is still requested to accelerate.
 
 v20.0.2
 > Allows users to enter a minimum robot velocity of 0 ft/s.

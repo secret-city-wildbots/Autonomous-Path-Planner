@@ -213,14 +213,14 @@ def generatePath(path):
                 if(flag_nxt): break
                     
         else: section = 'middle'            
-                
+        
         # The next dense point is the next waypoint if there was no arc 
-        idxs_smooth.append(i+1)
         if(section=='middle'):
+            idxs_smooth.append(min(i+2,path.numWayPoints()-1))
             ptxs_smooth.append(path.ways_x[i+1])
             ptys_smooth.append(path.ways_y[i+1])
             tchs_smooth.append(0)
-    
+            
     # Calculate the distances along the path and for each segment
     ds_seg = 0
     wayNum = 1
@@ -264,14 +264,25 @@ def generatePath(path):
             v_goal = path.ways_v[wayNum]
             delta_v_req = v_goal-v_running
             
-            # Travel distance avalaible in this segment
+            # Travel distance available in this segment
             delta_s_seg = dsts_segs[wayNum] 
             
             # Handle acceleration limiting
             if(delta_v_req>0):
+                
+                # Calculate the maximum delta v permitted
                 delta_v_max = -v_running+np.sqrt((v_running**2)+(2*path.a_max*delta_s_seg))
-                delta_v_okay = min(delta_v_req,delta_v_max)
-            else: delta_v_okay = delta_v_req
+                
+                # Accelerate as fast as possible if we missed the previous velocity waypoint
+                if(v_running<path.ways_v[wayNum-1]):
+                    delta_v_okay = delta_v_max 
+                else:
+                    delta_v_okay = min(delta_v_req,delta_v_max)
+                
+            else: 
+                
+                # No decceleration limit
+                delta_v_okay = delta_v_req
                 
             # Normalize the delta v per unit distance
             delta_v_per_s = delta_v_okay/delta_s_seg
@@ -279,7 +290,27 @@ def generatePath(path):
         # Update the robot's current velocity
         delta_s = dsts_smooth[i]-dsts_smooth[i-1]
         v_running += delta_v_per_s*delta_s
+        if(delta_v_req>0): v_running = min(v_running,v_goal)
+        else: v_running = max(v_running,v_goal)
         vels_smooth.append(v_running)
+        
+        
+        #*** min here
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
     # Calculate the smooth times
     t_total = 0 # total time that the robot has been traveling
