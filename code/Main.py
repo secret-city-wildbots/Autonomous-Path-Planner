@@ -1,4 +1,4 @@
-# Date: 2021-02-05
+# Date: 2021-02-07
 # Description: a path planner for FRC 2020
 #-----------------------------------------------------------------------------
 
@@ -61,6 +61,7 @@ import cv2 # OpenCV
 import math # additional math functionality
 import matplotlib # Matplotlib module
 import matplotlib.pyplot as plt # Matplotlib plotting functionality
+from matplotlib import backend_bases # Matplotlib configuration
 import pandas # data handling toolbox
 import time # time related functions
 import tkinter as tk # TkInter UI backbone
@@ -108,6 +109,15 @@ plt.rcParams.update({'figure.max_open_warning': False}) # disable warning about 
 plt.rcParams['keymap.quit'] = '' # disable matplotlib hotkeys
 plt.rcParams['keymap.save'] = '' # disable matplotlib hotkeys
 if(ostype=='Linux'): matplotlib.use('TkAgg') # call the correct backend when installed on Linux
+backend_bases.NavigationToolbar2.toolitems = (
+    ('Home', 'Reset original view', 'home', 'home'), # Home button
+    ('Back', 'Back to previous view', 'back', 'back'), # Previous View button
+    ('Forward', 'Forward to next view', 'forward', 'forward'), # Forward View button
+    (None, None, None, None), # separator
+    ('Pan', 'Pan axes with left mouse, zoom right', 'move', 'pan'), # Zoom to Rectangle button
+    ('Zoom', 'Zoom to rectangle', 'zoom_to_rect', 'zoom'), # Zoom to Rectangle button
+    (None, None, None, None), # spearator
+    ('Save', 'Save the figure', 'filesave', 'save_figure'),) # Save figure button
 
 # Adjust dpi and font settings based on screen resolution
 scrnW *= float(dpiScaling/100.0)
