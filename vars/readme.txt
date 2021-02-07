@@ -10,7 +10,16 @@ FIRST Robotics Team 4265
 Release Notes
 -------------------------------------------------------------------------------------
 
-v***
+v20.0.3
+> Cleans up the buttons on the field display GUI.
+> Fixes critical pathing bugs which occurred when waypoint velocities of 0 ft/s were entered.
+> The robot will now accelerate as hard as possible if it missed its previous velocity waypoint and is still requested to accelerate.
+
+v20.0.2
+> Allows users to enter a minimum robot velocity of 0 ft/s.
+> The planner now times out if no pathing solution can be found.
+> Adds a manual DPI scaling override to improve rendering on newer laptop screens.
+> Improves the installation process.
 > Fixes a bug which can occur during waypoint insertion.
 
 v2.0.0

@@ -130,6 +130,8 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
+
+v20.0.3
 > Cleans up the buttons on the field display GUI.
 > Fixes critical pathing bugs which occurred when waypoint velocities of 0 ft/s were entered.
 > The robot will now accelerate as hard as possible if it missed its previous velocity waypoint and is still requested to accelerate.
