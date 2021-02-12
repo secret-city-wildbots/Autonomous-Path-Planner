@@ -130,6 +130,7 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
+> Corrects for more pathing issues when the waypoint velocities are set to 0 ft/s.
 
 v20.0.3
 > Cleans up the buttons on the field display GUI.
