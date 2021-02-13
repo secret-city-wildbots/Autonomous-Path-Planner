@@ -91,7 +91,6 @@ try: h_npz_defaults = np.load(dirPvars+'defaults.npz',allow_pickle=True)
 except: pass
 try: dpiScaling = h_npz_defaults['dpiScaling']
 except: dpiScaling = 100.0
-
 #-----------------------------------------------------------------------------
 
 # Close previous windows
