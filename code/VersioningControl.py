@@ -129,7 +129,7 @@ FIRST Robotics Team 4265
 Release Notes
 -------------------------------------------------------------------------------------
 
-v***
+v20.0.4
 > Corrects for more pathing issues when the waypoint velocities are set to 0 ft/s.
 
 v20.0.3

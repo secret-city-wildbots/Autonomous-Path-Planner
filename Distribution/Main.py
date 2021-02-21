@@ -3,8 +3,8 @@
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.0.3' # breaking.major-feature-add.minor-feature-or-bug-fix
-versionType = 'release' # options are "beta" or "release"
+versionNumber = '2.0.4' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionType = 'release' # options are "dev" or "release"
 print('Loading v%s...' %(versionNumber))
 
 # Ignore future and depreciation warnings when not in development
@@ -91,7 +91,6 @@ try: h_npz_defaults = np.load(dirPvars+'defaults.npz',allow_pickle=True)
 except: pass
 try: dpiScaling = h_npz_defaults['dpiScaling']
 except: dpiScaling = 100.0
-
 #-----------------------------------------------------------------------------
 
 # Close previous windows

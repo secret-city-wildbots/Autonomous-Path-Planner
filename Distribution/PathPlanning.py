@@ -1,4 +1,4 @@
-# Date: 2021-02-07
+# Date: 2021-02-12
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
@@ -293,25 +293,12 @@ def generatePath(path):
         if(delta_v_req>0): v_running = min(v_running,v_goal)
         else: v_running = max(v_running,v_goal)
         vels_smooth.append(v_running)
-        
-        
-        #*** min here
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+       
+    # Impliment instantaneous acceleration/decceleration below 12.0 in/s
+    for i in range(1,len(ptxs_smooth)-1,1):
+        if(idxs_smooth[i]==idxs_smooth[i+1]): 
+            vels_smooth[i] = max(12.0,vels_smooth[i])
+            
     # Calculate the smooth times
     t_total = 0 # total time that the robot has been traveling
     tims_smooth = [t_total]
