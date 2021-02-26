@@ -1,10 +1,10 @@
-# Date: 2021-02-07
+# Date: 2021-02-25
 # Description: a path planner for FRC 2020
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.0.4' # breaking.major-feature-add.minor-feature-or-bug-fix
-versionType = 'release' # options are "dev" or "release"
+versionNumber = '2.0.5' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionType = 'beta' # options are "dev" or "release"
 print('Loading v%s...' %(versionNumber))
 
 # Ignore future and depreciation warnings when not in development
@@ -494,7 +494,7 @@ windW = int(0.28*min(1080,minScrnDim)) # window width
 windH = int(0.65*min(1080,minScrnDim)) # window height 
 guiwindow.geometry(str(windW)+'x'+str(windH))
 guiwindow.configure(background=guiColor_offwhite)
-guiwindow.resizable(width=False, height=False)
+guiwindow.resizable(width=False,height=True)
 
 # Set the initial window location
 guiwindow.geometry("+{}+{}".format(int(0.5*(guiwindow.winfo_screenwidth()-windW)),int(0.5*(guiwindow.winfo_screenheight()-windH))))

@@ -129,6 +129,9 @@ FIRST Robotics Team 4265
 Release Notes
 -------------------------------------------------------------------------------------
 
+v***
+> The main GUI window can now be resized in the vertical direction.
+
 v2.0.4
 > Corrects for more pathing issues when the waypoint velocities are set to 0 ft/s.
 
