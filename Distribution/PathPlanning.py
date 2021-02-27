@@ -1,13 +1,13 @@
-# Date: 2021-02-26
+# Date: 2021-02-27
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
 # Load external modules
 import cv2 # OpenCV
 import matplotlib # all of Matplotlib
-import matplotlib.pyplot as plt # Matplotlib plotting functionality
+from matplotlib import pyplot as plt # Matplotlib plotting functionality
 matplotlib.rcParams['toolbar'] = 'toolmanager' # toolbar functionality
-from matplotlib.backend_tools import ToolToggleBase # toolbar functionality
+from matplotlib.backend_tools import ToolBase,ToolToggleBase # toolbar functionality
 import numpy as np # Numpy toolbox
 import pandas # data handling toolbox
 import sys # access to Windows OS
@@ -356,19 +356,20 @@ def pathSolution(path):
 
 #-----------------------------------------------------------------------------
 
-def popupPtData(path,x_prior,y_prior):
+def popupPtData(path,x_prior,y_prior,flag_newPt):
     """
     Creates a pop-up window that allows a user to create or edit a waypoint
     Args:
         path: robot path 
         x_prior: (pixels) the x coordinate of the user's mouse click
         y_prior: (pixels) the y coordinate of the user's mouse click
+        flag_newPt: True if this is a new point
     Returns:
         path: the updated robot path
     """
     
     # Configure waypoint selection
-    [x_init,y_init,v_init,o_init,R_init,T_init,way_index] = path.configureWayPoint(x_prior,y_prior)
+    [x_init,y_init,v_init,o_init,R_init,T_init,way_index] = path.configureWayPoint(x_prior,y_prior,flag_newPt)
     if(way_index!=-1): way_order = way_index
     else: way_order = path.numWayPoints()
     
@@ -590,15 +591,15 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
     I_robot = loadRobot(file_robot,path.scale_pi)
     
     # Display the field image
-    global h_im
-    [h_fig,h_im,ax,_] = gensup.smartRealImageDisplay(I,[path.field_x_real,path.field_y_real],'Field Map',
+    global h_im,h_fig
+    [h_fig,h_im,ax,_] = gensup.smartRealImageDisplay(I,[path.field_x_real,path.field_y_real],path.loaded_filename,
                                                       flag_grid=True,
                                                       origin='bottomleft',x_real='X: Down Field',y_real='Y: Side Field',
                                                       units='in')
     
     # Define global variables
     global flag_toolwaypoint
-    flag_toolwaypoint = True
+    flag_toolwaypoint = 1
     global flag_risingEdge
     flag_risingEdge = False
     global flag_adding 
@@ -612,12 +613,55 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
     
     # Watch for window close event
     def actionWindowClose(evt):
+        
+        # Save the path
+        savePath()
+        
+        # Reset the GUI
+        buttonPlan.configure(bg=guiColor_hotgreen,state=tk.NORMAL)
+    
+    # Set up mouse button click callbacks
+    def mouseClick(event):
+        global flag_risingEdge,flag_adding,h_fig
+        sys.stdout.flush()
+        button = 'LEFT'
+        if(flag_toolwaypoint!=0):
+            if(str(event.button).find(button)!=-1):
+                if(flag_risingEdge==False):
+                    flag_risingEdge = True
+                    if(not flag_adding):
+                    
+                        # Block additional popups
+                        flag_adding = True
+                        
+                        # Retrieve information about the selected point
+                        [x_prior,y_prior] = event.xdata, event.ydata 
+                        
+                        # Display popup window
+                        try:
+                            popupPtData(path,x_prior,y_prior,flag_toolwaypoint==1)
+                            generatePath()
+                            h_fig.canvas.set_window_title(path.loaded_filename+'*')
+                            flag_adding = False
+                        except: flag_adding = False # ignore
+                
+    # Set up mouse button unclick callbacks
+    def mouseUnClick(event):
+        global flag_risingEdge
+        sys.stdout.flush()
+        button = 'LEFT'
+        if(flag_toolwaypoint!=0):
+            if(str(event.button).find(button)!=-1):
+                if(flag_risingEdge==True):
+                    flag_risingEdge = False
+                    
+    def savePath():
         global path
         
         if(path.numWayPoints()>1):
         
             # Ask the user if they would like to save the path
-            filename = gensup.popupTextEntry('name the path or leave blank to not save',path.loaded_filename)
+            filename = gensup.popupTextEntry('save path as',path.loaded_filename)
             
             if(filename!=''):
                 
@@ -640,43 +684,10 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
                 
                 # Save an image of the path planning figure
                 h_fig.savefig('../robot paths/%s.jpg' %(filename))
-        
-        # Reset the GUI
-        buttonPlan.configure(bg=guiColor_hotgreen,state=tk.NORMAL)
-    
-    # Set up mouse button click callbacks
-    def mouseClick(event):
-        global flag_risingEdge,flag_adding
-        sys.stdout.flush()
-        button = 'LEFT'
-        if(flag_toolwaypoint):
-            if(str(event.button).find(button)!=-1):
-                if(flag_risingEdge==False):
-                    flag_risingEdge = True
-                    if(not flag_adding):
-                    
-                        # Block additional popups
-                        flag_adding = True
-                        
-                        # Retrieve information about the selected point
-                        [x_prior,y_prior] = event.xdata, event.ydata 
-                        
-                        # Display popup window
-                        try:
-                            popupPtData(path,x_prior,y_prior)
-                            generatePath()
-                            flag_adding = False
-                        except: flag_adding = False # ignore
                 
-    # Set up mouse button unclick callbacks
-    def mouseUnClick(event):
-        global flag_risingEdge
-        sys.stdout.flush()
-        button = 'LEFT'
-        if(flag_toolwaypoint):
-            if(str(event.button).find(button)!=-1):
-                if(flag_risingEdge==True):
-                    flag_risingEdge = False
+                # Update the loaded path name
+                path.loaded_filename = filename
+                h_fig.canvas.set_window_title(path.loaded_filename)
                 
     def generatePath():
         global path,h_im,h_ways,h_smooths,hs_ori
@@ -727,7 +738,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
                 # Display the path metrics
                 details_start = 'start at (%0.2f in, %0.2f in, %0.0f°)' %(path.smooths_x[0],path.smooths_y[0],path.smooths_o[0])
                 details_end = 'end at (%0.2f in, %0.2f in, %0.0f°) predicted travel time: %0.2f s' %(path.smooths_x[-1],path.smooths_y[-1],path.smooths_o[-1],path.total_t)
-                plt.xlabel('X: Down Field\n%s\n%s' %(details_start,details_end))
+                plt.xlabel('X: Down Field (in) \n%s\n%s' %(details_start,details_end))
                 
                 # Display the smooth path
                 ptColors = []
@@ -738,7 +749,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
                     ptColors.append(np.array([ptColor[0],ptColor[1],ptColor[2]]))
                 h_smooths = ax.scatter(path.scale_pi*np.array(path.smooths_x),
                                        (path.field_y_pixels)*np.ones((len(path.smooths_y)),float) - path.scale_pi*np.array(path.smooths_y),
-                                       color=np.array(ptColors),marker='.',s=200)
+                                       color=np.array(ptColors),marker='.',s=50)
                 
                 # Display the orientation overlays
                 for i in range(0,path.numSmoothPoints(),1):
@@ -749,18 +760,37 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
                     yb = ya - (path.step_size*path.scale_pi)*np.sin(oa)
                     hs_ori.append(plt.plot(np.array([xa,xb]),np.array([ya,yb]),color=np.array(ptColors[i])))
     
-    class ToolWaypoint(ToolToggleBase):
+    class ToolSavePath(ToolBase):
+        description = 'Saves the path'
+        default_toggled = False
+        image = dirPvars+'savepath.png'
+        def trigger(self,*args):
+            savePath()
+    
+    class ToolAddWaypoint(ToolToggleBase):
         description = 'Adds a waypoint'
-        radio_group = 'tool'
+        radio_group = 'default'
         default_toggled = True
-        image = dirPvars+'waypoint.png'
+        image = dirPvars+'addwaypoint.png'
         def enable(self,*args):
             global flag_toolwaypoint
-            flag_toolwaypoint = True # waypoint tool is selected
+            flag_toolwaypoint = 1 # add waypoint tool is selected
         def disable(self,*args):
             global flag_toolwaypoint
-            flag_toolwaypoint = False # waypoint tool is deselected
-    
+            flag_toolwaypoint = 0 # add waypoint tool is deselected
+            
+    class ToolEditWaypoint(ToolToggleBase):
+        description = 'Edits a waypoint'
+        radio_group = 'default'
+        default_toggled = False
+        image = dirPvars+'editwaypoint.png'
+        def enable(self,*args):
+            global flag_toolwaypoint
+            flag_toolwaypoint = 2 # edit waypoint tool is selected
+        def disable(self,*args):
+            global flag_toolwaypoint
+            flag_toolwaypoint = 0 # edit waypoint tool is deselected
+            
     # Configure the tool manager
     tm = h_fig.canvas.manager.toolmanager
     h_fig.canvas.manager.toolmanager.remove_tool('help')
@@ -768,8 +798,12 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
     h_fig.canvas.manager.toolmanager.remove_tool('save')
     
     # Add the new tools to the toolbar
-    tm.add_tool('Add Waypoint',ToolWaypoint)
+    tm.add_tool('Save Path',ToolSavePath)
+    h_fig.canvas.manager.toolbar.add_tool(tm.get_tool('Save Path'),'custom')
+    tm.add_tool('Add Waypoint',ToolAddWaypoint)
     h_fig.canvas.manager.toolbar.add_tool(tm.get_tool('Add Waypoint'),'custom')
+    tm.add_tool('Edit Waypoint',ToolEditWaypoint)
+    h_fig.canvas.manager.toolbar.add_tool(tm.get_tool('Edit Waypoint'),'custom')
     
     # Connect the mouse button callbacks
     plt.connect('button_press_event',mouseClick)

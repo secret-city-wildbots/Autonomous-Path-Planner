@@ -749,7 +749,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
                     ptColors.append(np.array([ptColor[0],ptColor[1],ptColor[2]]))
                 h_smooths = ax.scatter(path.scale_pi*np.array(path.smooths_x),
                                        (path.field_y_pixels)*np.ones((len(path.smooths_y)),float) - path.scale_pi*np.array(path.smooths_y),
-                                       color=np.array(ptColors),marker='.',s=25)
+                                       color=np.array(ptColors),marker='.',s=50)
                 
                 # Display the orientation overlays
                 for i in range(0,path.numSmoothPoints(),1):
@@ -763,7 +763,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
     class ToolSavePath(ToolBase):
         description = 'Saves the path'
         default_toggled = False
-        image = dirPvars+'save.png'
+        image = dirPvars+'savepath.png'
         def trigger(self,*args):
             savePath()
     

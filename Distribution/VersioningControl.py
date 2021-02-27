@@ -50,7 +50,9 @@ def install():
         # Move supporting files to the correct folders
         os.system('move '+'settings.npz'+' "'+'../vars'+'"')
         os.system('move '+'graphic_4265.png'+' "'+'../vars'+'"')
-        os.system('move '+'waypoint.png'+' "'+'../vars'+'"')
+        os.system('move '+'addwaypoint.png'+' "'+'../vars'+'"')
+        os.system('move '+'editwaypoint.png'+' "'+'../vars'+'"')
+        os.system('move '+'savepath.png'+' "'+'../vars'+'"')
         
         # Notify the user of successful installation
         instructions = 'Next Steps:\n'
@@ -129,6 +131,12 @@ FIRST Robotics Team 4265
 -------------------------------------------------------------------------------------
 Release Notes
 -------------------------------------------------------------------------------------
+
+v2.1.1
+> Overhauls the path saving code.
+> Adds a seperate button for editing a waypoint.
+> Fixes a bug in the x-axis label display.
+> Radio group is fixed custom toolbar buttons.
 
 v2.1.0
 > Fixes a minor installation bug.

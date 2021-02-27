@@ -1,4 +1,4 @@
-# Date: 2020-06-11
+# Date: 2021-02-27
 # Description: general support functions
 #-----------------------------------------------------------------------------
 
@@ -25,6 +25,7 @@ try:
     guiColor_darkgreen = h_npz_settings['guiColor_darkgreen']
     guiColor_cherryred = h_npz_settings['guiColor_cherryred']
     guiColor_hotpink = h_npz_settings['guiColor_hotpink']
+    guiColor_hotgreen = h_npz_settings['guiColor_hotgreen']
     guiFontSize_large = h_npz_settings['guiFontSize_large']
     guiFontSize_small = h_npz_settings['guiFontSize_small']
     guiFontType_normal = h_npz_settings['guiFontType_normal']
@@ -336,7 +337,7 @@ def popupTextEntry(titletext,default):
     entrywindow = tk.Toplevel()
     entrywindow.title(str(softwareName))
     windW = 400
-    windH = 125
+    windH = 175
     entrywindow.geometry(str(windW)+'x'+str(windH))
     entrywindow.configure(background=guiColor_offwhite)
     entrywindow.resizable(width=False, height=False)
@@ -355,12 +356,14 @@ def popupTextEntry(titletext,default):
     input0_var.set('')
     entry0 = tk.Entry(entrywindow,textvariable=input0_var,fg=guiColor_offwhite,bg=guiColor_white,font=(guiFontType_normal,guiFontSize_large),width=int(0.07*windW))
     entry0.insert(0,default)
-    buttonApply = tk.Button(entrywindow,text='Apply',fg=guiColor_black,bg=guiColor_hotpink,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.02*windW),command=actionApply)
+    buttonApply = tk.Button(entrywindow,text='Apply',fg=guiColor_black,bg=guiColor_hotgreen,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.02*windW),command=actionApply)
+    buttonCancel = tk.Button(entrywindow,text='Cancel',fg=guiColor_black,bg=guiColor_hotpink,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.02*windW),command=actionClose)
     
     # Configure and place the gui elements
     title.pack(fill=tk.X)
     entry0.pack(pady=5)
     buttonApply.pack(pady=5)
+    buttonCancel.pack(pady=5)
     entrywindow.bind('<Return>',actionApply)
     entry0.lift() 
     entrywindow.focus_set()

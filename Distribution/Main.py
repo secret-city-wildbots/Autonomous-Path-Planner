@@ -3,7 +3,7 @@
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.1.0' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionNumber = '2.1.1' # breaking.major-feature-add.minor-feature-or-bug-fix
 versionType = 'release' # options are "dev" or "release"
 print('Loading v%s...' %(versionNumber))
 
@@ -171,7 +171,7 @@ class Path():
         self.field_x_pixels = 1.0 # (pix) length of the field
         self.field_y_pixels = 1.0 # (pix) width of the field
         self.scale_pi = 1.0 # (pix/in)
-        self.loaded_filename = '' # the name of the loaded path
+        self.loaded_filename = 'unamed 1' # the name of the loaded path
         
         # Way points
         self.ways_x = [] # (in) list of way point x positions
@@ -198,21 +198,11 @@ class Path():
         self.field_y_pixels = I.shape[0]
         self.scale_pi = self.field_x_pixels/self.field_x_real
         
-    def configureWayPoint(self,x_prior,y_prior):
+    def configureWayPoint(self,x_prior,y_prior,flag_newPt):
         
         # Convert the candidate points into inches for search
         x_prior = x_prior/self.scale_pi # (in)
         y_prior = (self.field_y_pixels-y_prior)/self.scale_pi # (in)
-        
-        # Check to see if this is a new or a pre-exisiting point
-        thresh_samePt = 5 # [in] if the selected point is closer than this, you will edit a previous point
-        flag_newPt = True
-        i = -1 # needed for first call
-        for i in range(0,len(self.ways_x),1):
-            d = np.sqrt(((self.ways_x[i]-x_prior)**2)+((self.ways_y[i]-y_prior)**2))
-            if(d<thresh_samePt):
-                flag_newPt = False
-                break
         
         if(flag_newPt):
             
@@ -222,23 +212,33 @@ class Path():
             # Default values for a new point
             x_init = np.round(x_prior,2) # (ft)
             y_init = np.round(y_prior,2) # (ft)
-            v_init = 1.0
+            v_init = 0.0
             o_init = 0.0
             R_init = 3*self.step_size
             T_init = False
             
         else:
             
-            # Index for an existing point
-            way_index = i
+            # Find the closest point to edit
+            way_index = -1
+            d_edit = None
+            for i in range(0,len(self.ways_x),1):
+                d = np.sqrt(((self.ways_x[i]-x_prior)**2)+((self.ways_y[i]-y_prior)**2))
+                if(d_edit is not None):
+                    if(d<d_edit): 
+                        d_edit = d
+                        way_index = i
+                else:
+                    d_edit = d
+                    way_index = i
             
-            # Default values for a new point
-            x_init = np.round(self.ways_x[i],2) # (in)
-            y_init = np.round(self.ways_y[i],2) # (in)
-            v_init = (1/12)*self.ways_v[i]
-            o_init = self.ways_o[i]
-            R_init = self.ways_R[i]
-            T_init = self.ways_T[i]
+            # Default values for an existing point
+            x_init = np.round(self.ways_x[way_index],2) # (in)
+            y_init = np.round(self.ways_y[way_index],2) # (in)
+            v_init = (1/12)*self.ways_v[way_index]
+            o_init = self.ways_o[way_index]
+            R_init = self.ways_R[way_index]
+            T_init = self.ways_T[way_index]
         
         return x_init, y_init, v_init, o_init, R_init, T_init, way_index
     
@@ -521,8 +521,8 @@ textFields = []
 for i in range(0,len(fieldNames),1):
     [title,field] = gensup.easyTextField(guiwindow,windW,fieldNames[i],str(defaults[i]))
     textFields.append({'title': title, 'field': field})
-buttonApply = tk.Button(guiwindow,text='Apply',fg=guiColor_black,bg=guiColor_hotpink,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.02*windW),command=actionApplySettings)
-buttonPlan = tk.Button(guiwindow,text='Plan',fg=guiColor_black,bg=guiColor_hotgreen,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.02*windW),command=actionLoadField)
+buttonApply = tk.Button(guiwindow,text='Apply',fg=guiColor_black,bg=guiColor_hotpink,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.03*windW),command=actionApplySettings)
+buttonPlan = tk.Button(guiwindow,text='Plan',fg=guiColor_black,bg=guiColor_hotgreen,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.03*windW),command=actionLoadField)
 
 # Place all elements
 for i in range(0,len(textFields),1):
