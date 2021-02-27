@@ -131,7 +131,10 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
-
+> Overhauls the path saving code.
+> Adds a seperate button for editing a waypoint.
+> Fixes a bug in the x-axis label display.
+> Radio group is fixed custom toolbar buttons.
 
 v2.1.0
 > Fixes a minor installation bug.
