@@ -605,10 +605,8 @@ def smartRealImageDisplay(I,actualSize,titletext,**kwargs):
     scale = [float(imageSize[0])/float(actualSize[0]),float(imageSize[1])/float(actualSize[1])] # [width, height]
     
     # Determine the correct number of digits to display
-    try: xdigits = len(str(actualSize[0]).split('.')[1]) 
-    except: xdigits = 0
-    try: ydigits = len(str(actualSize[1]).split('.')[1]) 
-    except: ydigits = 0
+    xdigits = 0
+    ydigits = 0
     digits = min(2,max([xdigits,ydigits]))
     
     # Configure the tick marks and grid lines
@@ -622,8 +620,8 @@ def smartRealImageDisplay(I,actualSize,titletext,**kwargs):
     yticks_num = np.round(yticks_num,digits) 
     xticks_str = []
     yticks_str = []
-    for i in xticks_num: xticks_str.append(str(i))
-    for i in yticks_num: yticks_str.append(str(i))
+    for i in xticks_num: xticks_str.append(str(int(i)))
+    for i in yticks_num: yticks_str.append(str(int(i)))
     yticks_str = np.flip(yticks_str,0)
     if(flag_grid):
         ax.set_xticklabels(xticks_str)

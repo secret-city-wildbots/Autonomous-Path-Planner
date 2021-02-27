@@ -1,9 +1,9 @@
-# Date: 2021-02-07
+# Date: 2021-02-26
 # Description: a path planner for FRC 2020
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.0.4' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionNumber = '2.1.0' # breaking.major-feature-add.minor-feature-or-bug-fix
 versionType = 'release' # options are "dev" or "release"
 print('Loading v%s...' %(versionNumber))
 
@@ -113,10 +113,8 @@ backend_bases.NavigationToolbar2.toolitems = (
     ('Back', 'Back to previous view', 'back', 'back'), # Previous View button
     ('Forward', 'Forward to next view', 'forward', 'forward'), # Forward View button
     (None, None, None, None), # separator
-    ('Pan', 'Pan axes with left mouse, zoom right', 'move', 'pan'), # Zoom to Rectangle button
-    ('Zoom', 'Zoom to rectangle', 'zoom_to_rect', 'zoom'), # Zoom to Rectangle button
-    (None, None, None, None), # spearator
-    ('Save', 'Save the figure', 'filesave', 'save_figure'),) # Save figure button
+    ('Pan', 'Pan axes with left mouse, zoom right', 'move', 'tool'), # Zoom to Rectangle button
+    ('Zoom', 'Zoom to rectangle', 'zoom_to_rect', 'tool'),) # Zoom to Rectangle button
 
 # Adjust dpi and font settings based on screen resolution
 scrnW *= float(dpiScaling/100.0)
@@ -151,7 +149,7 @@ class Path():
         except:
             field_x_real = 52.4375
             field_y_real = 26.9375 
-            v_min = 1.0
+            v_min = 0.0
             v_max = 15.0
             a_max = 3.0
             step_size = 1.0
@@ -480,10 +478,7 @@ def actionLoadField(*args):
         path.loadWayPoints(file_csv)
         
         # Start the path planner
-        plan.definePath(path,file_I,file_robot)
-    
-    # Reset the GUI
-    buttonPlan.configure(bg=guiColor_hotgreen,state=tk.NORMAL)
+        plan.definePath(path,file_I,file_robot,buttonPlan)
     
 #-----------------------------------------------------------------------------
 
@@ -494,7 +489,7 @@ windW = int(0.28*min(1080,minScrnDim)) # window width
 windH = int(0.65*min(1080,minScrnDim)) # window height 
 guiwindow.geometry(str(windW)+'x'+str(windH))
 guiwindow.configure(background=guiColor_offwhite)
-guiwindow.resizable(width=False, height=False)
+guiwindow.resizable(width=False,height=True)
 
 # Set the initial window location
 guiwindow.geometry("+{}+{}".format(int(0.5*(guiwindow.winfo_screenwidth()-windW)),int(0.5*(guiwindow.winfo_screenheight()-windH))))

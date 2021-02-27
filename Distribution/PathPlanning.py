@@ -1,10 +1,13 @@
-# Date: 2021-02-12
+# Date: 2021-02-26
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
 # Load external modules
 import cv2 # OpenCV
+import matplotlib # all of Matplotlib
 import matplotlib.pyplot as plt # Matplotlib plotting functionality
+matplotlib.rcParams['toolbar'] = 'toolmanager' # toolbar functionality
+from matplotlib.backend_tools import ToolToggleBase # toolbar functionality
 import numpy as np # Numpy toolbox
 import pandas # data handling toolbox
 import sys # access to Windows OS
@@ -35,7 +38,7 @@ guiFontType_uniform = h_npz_settings['guiFontType_uniform']
 
 #-----------------------------------------------------------------------------
 
-def generatePath(path):
+def pathSolution(path):
     """
     Generates a smooth path based on a set of waypoints
     Args:
@@ -559,16 +562,21 @@ def overlayRobot(I_in,I_robot_in,scale_pi,field_y_pixels,center_x,center_y,theta
 
 #-----------------------------------------------------------------------------
 
-def definePath(path,file_I,file_robot):
+def definePath(path_loaded,file_I,file_robot,buttonPlan):
     """
     Allows the user to define an autonomous path
     Args:
-        path: robot path
+        path_loaded: loaded robot path
         file_I: file path to the field map image
         file_robot: file path to the robot model
+        buttonPlan: handle for the path planning button
     Returns:
         None
     """
+    
+    # Initialize the path with the loaded path
+    global path
+    path = path_loaded
     
     # Load the field image
     I = cv2.imread(file_I,cv2.IMREAD_COLOR) # load the selected image 
@@ -582,163 +590,191 @@ def definePath(path,file_I,file_robot):
     I_robot = loadRobot(file_robot,path.scale_pi)
     
     # Display the field image
-    [h_fig,h_im,ax,_] = gensup.smartRealImageDisplay(I,[path.field_x_real/12.0,path.field_y_real/12.0],'Field Map',
-                                                      bannertext='Right-Click to Select Waypoints',flag_grid=True,
+    global h_im
+    [h_fig,h_im,ax,_] = gensup.smartRealImageDisplay(I,[path.field_x_real,path.field_y_real],'Field Map',
+                                                      flag_grid=True,
                                                       origin='bottomleft',x_real='X: Down Field',y_real='Y: Side Field',
-                                                      units='ft')
+                                                      units='in')
     
     # Define global variables
-    global flag_abort
-    flag_abort = False
+    global flag_toolwaypoint
+    flag_toolwaypoint = True
     global flag_risingEdge
     flag_risingEdge = False
-    global add_state
-    add_state = 2 # intialize in this state to display a loaded path
+    global flag_adding 
+    flag_adding = False
+    global h_ways
+    h_ways = None
+    global h_smooths
+    h_smooths = None
+    global hs_ori
+    hs_ori = []
     
     # Watch for window close event
     def actionWindowClose(evt):
-        global flag_abort
-        flag_abort = True
-    h_fig.canvas.mpl_connect('close_event', actionWindowClose) 
+        global path
+        
+        if(path.numWayPoints()>1):
+        
+            # Ask the user if they would like to save the path
+            filename = gensup.popupTextEntry('name the path or leave blank to not save',path.loaded_filename)
+            
+            if(filename!=''):
+                
+                # Save the .csv file
+                nComp = max(0,path.numSmoothPoints()-path.numWayPoints())
+                df = pandas.DataFrame(data={"Distance (in)": path.smooths_d,
+                                            "Time (s)": path.smooths_t,
+                                            "X (in)": path.smooths_x,
+                                            "Y (in)": path.smooths_y,
+                                            "Velocity (in/s)": path.smooths_v,
+                                            "Orientation (deg)": path.smooths_o,
+                                            "Touch": path.smooths_T,
+                                            "Way X (in)": path.ways_x + nComp*[''],
+                                            "Way Y (in)": path.ways_y + nComp*[''],
+                                            "Way Velocity (in/s)": path.ways_v + nComp*[''],
+                                            "Way Orientation (deg)": path.ways_o + nComp*[''],
+                                            "Way Turn Radius (in)": path.ways_R + nComp*[''],
+                                            "Touch this Point": path.ways_T + nComp*['']})
+                df.to_csv("../robot paths/%s.csv" %(filename), sep=',',index=False)
+                
+                # Save an image of the path planning figure
+                h_fig.savefig('../robot paths/%s.jpg' %(filename))
+        
+        # Reset the GUI
+        buttonPlan.configure(bg=guiColor_hotgreen,state=tk.NORMAL)
     
     # Set up mouse button click callbacks
     def mouseClick(event):
-        global flag_risingEdge,add_state
-        
+        global flag_risingEdge,flag_adding
         sys.stdout.flush()
-        button = 'RIGHT'
-        if(str(event.button).find(button)!=-1):
-            if(flag_risingEdge==False):
-                flag_risingEdge = True
-                if(add_state==0):
-                
-                    # Block additional popups
-                    add_state = 1
+        button = 'LEFT'
+        if(flag_toolwaypoint):
+            if(str(event.button).find(button)!=-1):
+                if(flag_risingEdge==False):
+                    flag_risingEdge = True
+                    if(not flag_adding):
                     
-                    # Retrieve information about the selected point
-                    [x_prior,y_prior] = event.xdata, event.ydata 
-                    
-                    # Display popup window
-                    try:
-                        popupPtData(path,x_prior,y_prior)
-                        add_state = 2
-                    except: add_state=0 # ignore
+                        # Block additional popups
+                        flag_adding = True
+                        
+                        # Retrieve information about the selected point
+                        [x_prior,y_prior] = event.xdata, event.ydata 
+                        
+                        # Display popup window
+                        try:
+                            popupPtData(path,x_prior,y_prior)
+                            generatePath()
+                            flag_adding = False
+                        except: flag_adding = False # ignore
                 
     # Set up mouse button unclick callbacks
     def mouseUnClick(event):
         global flag_risingEdge
         sys.stdout.flush()
-        button = 'RIGHT'
-        if(str(event.button).find(button)!=-1):
-            if(flag_risingEdge==True):
-                flag_risingEdge = False
+        button = 'LEFT'
+        if(flag_toolwaypoint):
+            if(str(event.button).find(button)!=-1):
+                if(flag_risingEdge==True):
+                    flag_risingEdge = False
+                
+    def generatePath():
+        global path,h_im,h_ways,h_smooths,hs_ori
+        
+        # Remove the previous plots
+        try: 
+            
+            h_ways.remove()
+            h_smooths.remove()
+            for h in hs_ori: h[0].remove()
+            hs_ori = []
+        except: pass
+    
+        if(path.numWayPoints()>0):
+    
+            # Add the robot model at the starting waypoint
+            I_fused = overlayRobot(I,I_robot,path.scale_pi,path.field_y_pixels,path.ways_x[0],path.ways_y[0],path.ways_o[0])
+            
+        if(path.numWayPoints()>1):
+    
+            # Add the robot model at the ending waypoint
+            I_fused = overlayRobot(I_fused,I_robot,path.scale_pi,path.field_y_pixels,path.ways_x[-1],path.ways_y[-1],path.ways_o[-1])
+            
+        if(path.numWayPoints()>0):    
+            
+            # Display the robot at the starting and end points
+            h_im.remove()
+            h_im = ax.imshow(I_fused,vmin=0,vmax=255,interpolation='none',extent=[0,I.shape[1],I.shape[0],0])  
+    
+        if(path.numWayPoints()>0):
+        
+            # Update the way point plots
+            h_ways = ax.scatter(path.scale_pi*np.array(path.ways_x),(path.field_y_pixels)*np.ones((len(path.ways_y)),float) - path.scale_pi*np.array(path.ways_y),
+                                facecolors='none',edgecolors='r',marker='o',s=400)
+        
+        if(path.numWayPoints()>1):
+            
+            # Calculate the path
+            try: 
+                path = pathSolution(path)
+                flag_solution = True
+            except: 
+                tk.messagebox.showerror('4265 Path Planner','No pathing solution found, please modify the waypoints')
+                flag_solution = False
+            
+            if(flag_solution):
+            
+                # Display the path metrics
+                details_start = 'start at (%0.2f in, %0.2f in, %0.0f°)' %(path.smooths_x[0],path.smooths_y[0],path.smooths_o[0])
+                details_end = 'end at (%0.2f in, %0.2f in, %0.0f°) predicted travel time: %0.2f s' %(path.smooths_x[-1],path.smooths_y[-1],path.smooths_o[-1],path.total_t)
+                plt.xlabel('X: Down Field\n%s\n%s' %(details_start,details_end))
+                
+                # Display the smooth path
+                ptColors = []
+                for i in range(0,path.numSmoothPoints(),1):
+                    if(path.smooths_T[i]>0.5):
+                        ptColor = [1,0,0] # color "must touch points red"
+                    else: ptColor = plt.cm.plasma(path.smooths_v[i]/path.v_max)
+                    ptColors.append(np.array([ptColor[0],ptColor[1],ptColor[2]]))
+                h_smooths = ax.scatter(path.scale_pi*np.array(path.smooths_x),
+                                       (path.field_y_pixels)*np.ones((len(path.smooths_y)),float) - path.scale_pi*np.array(path.smooths_y),
+                                       color=np.array(ptColors),marker='.',s=200)
+                
+                # Display the orientation overlays
+                for i in range(0,path.numSmoothPoints(),1):
+                    xa = path.smooths_x[i]*path.scale_pi
+                    ya = path.field_y_pixels-(path.smooths_y[i]*path.scale_pi)
+                    oa = np.pi*path.smooths_o[i]/180.0
+                    xb = xa + (path.step_size*path.scale_pi)*np.cos(oa)
+                    yb = ya - (path.step_size*path.scale_pi)*np.sin(oa)
+                    hs_ori.append(plt.plot(np.array([xa,xb]),np.array([ya,yb]),color=np.array(ptColors[i])))
+    
+    class ToolWaypoint(ToolToggleBase):
+        description = 'Adds a waypoint'
+        radio_group = 'tool'
+        default_toggled = True
+        image = dirPvars+'waypoint.png'
+        def enable(self,*args):
+            global flag_toolwaypoint
+            flag_toolwaypoint = True # waypoint tool is selected
+        def disable(self,*args):
+            global flag_toolwaypoint
+            flag_toolwaypoint = False # waypoint tool is deselected
+    
+    # Configure the tool manager
+    tm = h_fig.canvas.manager.toolmanager
+    h_fig.canvas.manager.toolmanager.remove_tool('help')
+    h_fig.canvas.manager.toolmanager.remove_tool('subplots')
+    h_fig.canvas.manager.toolmanager.remove_tool('save')
+    
+    # Add the new tools to the toolbar
+    tm.add_tool('Add Waypoint',ToolWaypoint)
+    h_fig.canvas.manager.toolbar.add_tool(tm.get_tool('Add Waypoint'),'custom')
     
     # Connect the mouse button callbacks
     plt.connect('button_press_event',mouseClick)
     plt.connect('button_release_event',mouseUnClick)
+    h_fig.canvas.mpl_connect('close_event', actionWindowClose) 
     
-    # Blocking loop
-    h_ways = None
-    h_smooths = None
-    hs_ori = []
-    while(flag_abort==False):
-        plt.pause(0.1)
-        if(add_state==2):
-            
-            # Remove the previous plots
-            try: 
-                
-                h_ways.remove()
-                h_smooths.remove()
-                for h in hs_ori: h[0].remove()
-                hs_ori = []
-            except: pass
-        
-            if(path.numWayPoints()>0):
-        
-                # Add the robot model at the starting waypoint
-                I_fused = overlayRobot(I,I_robot,path.scale_pi,path.field_y_pixels,path.ways_x[0],path.ways_y[0],path.ways_o[0])
-                
-            if(path.numWayPoints()>1):
-        
-                # Add the robot model at the ending waypoint
-                I_fused = overlayRobot(I_fused,I_robot,path.scale_pi,path.field_y_pixels,path.ways_x[-1],path.ways_y[-1],path.ways_o[-1])
-                
-            if(path.numWayPoints()>0):    
-                
-                # Display the robot at the starting and end points
-                h_im.remove()
-                h_im = ax.imshow(I_fused,vmin=0,vmax=255,interpolation='none',extent=[0,I.shape[1],I.shape[0],0])  
-        
-            if(path.numWayPoints()>0):
-            
-                # Update the way point plots
-                h_ways = ax.scatter(path.scale_pi*np.array(path.ways_x),(path.field_y_pixels)*np.ones((len(path.ways_y)),float) - path.scale_pi*np.array(path.ways_y),
-                                    facecolors='none',edgecolors='r',marker='o',s=400)
-            
-            if(path.numWayPoints()>1):
-                
-                # Calculate the path
-                try: 
-                    path = generatePath(path)
-                    flag_solution = True
-                except: 
-                    tk.messagebox.showerror('4265 Path Planner','No pathing solution found, please modify the waypoints')
-                    flag_solution = False
-                
-                if(flag_solution):
-                
-                    # Display the path metrics
-                    details_start = 'start at (%0.2f in, %0.2f in, %0.0f°)' %(path.smooths_x[0],path.smooths_y[0],path.smooths_o[0])
-                    details_end = 'end at (%0.2f in, %0.2f in, %0.0f°) predicted travel time: %0.2f s' %(path.smooths_x[-1],path.smooths_y[-1],path.smooths_o[-1],path.total_t)
-                    plt.xlabel('X: Down Field\n%s\n%s' %(details_start,details_end))
-                    
-                    # Display the smooth path
-                    ptColors = []
-                    for i in range(0,path.numSmoothPoints(),1):
-                        if(path.smooths_T[i]>0.5):
-                            ptColor = [1,0,0] # color "must touch points red"
-                        else: ptColor = plt.cm.plasma(path.smooths_v[i]/path.v_max)
-                        ptColors.append(np.array([ptColor[0],ptColor[1],ptColor[2]]))
-                    h_smooths = ax.scatter(path.scale_pi*np.array(path.smooths_x),
-                                           (path.field_y_pixels)*np.ones((len(path.smooths_y)),float) - path.scale_pi*np.array(path.smooths_y),
-                                           color=np.array(ptColors),marker='.',s=200)
-                    
-                    # Display the orientation overlays
-                    for i in range(0,path.numSmoothPoints(),1):
-                        xa = path.smooths_x[i]*path.scale_pi
-                        ya = path.field_y_pixels-(path.smooths_y[i]*path.scale_pi)
-                        oa = np.pi*path.smooths_o[i]/180.0
-                        xb = xa + (path.step_size*path.scale_pi)*np.cos(oa)
-                        yb = ya - (path.step_size*path.scale_pi)*np.sin(oa)
-                        hs_ori.append(plt.plot(np.array([xa,xb]),np.array([ya,yb]),color=np.array(ptColors[i])))
-            
-            # Reset
-            add_state = 0 
-            
-    if(path.numWayPoints()>1):
-        
-        # Ask the user if they would like to save the path
-        filename = gensup.popupTextEntry('name the path or leave blank to not save',path.loaded_filename)
-        
-        if(filename!=''):
-            
-            # Save the .csv file
-            nComp = max(0,path.numSmoothPoints()-path.numWayPoints())
-            df = pandas.DataFrame(data={"Distance (in)": path.smooths_d,
-                                        "Time (s)": path.smooths_t,
-                                        "X (in)": path.smooths_x,
-                                        "Y (in)": path.smooths_y,
-                                        "Velocity (in/s)": path.smooths_v,
-                                        "Orientation (deg)": path.smooths_o,
-                                        "Touch": path.smooths_T,
-                                        "Way X (in)": path.ways_x + nComp*[''],
-                                        "Way Y (in)": path.ways_y + nComp*[''],
-                                        "Way Velocity (in/s)": path.ways_v + nComp*[''],
-                                        "Way Orientation (deg)": path.ways_o + nComp*[''],
-                                        "Way Turn Radius (in)": path.ways_R + nComp*[''],
-                                        "Touch this Point": path.ways_T + nComp*['']})
-            df.to_csv("../robot paths/%s.csv" %(filename), sep=',',index=False)
-            
-            # Save an image of the path planning figure
-            h_fig.savefig('../robot paths/%s.jpg' %(filename))
+    # First call of the pathing and rendering algorithm
+    generatePath()

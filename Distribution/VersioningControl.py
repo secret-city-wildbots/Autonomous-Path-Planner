@@ -1,4 +1,4 @@
-# Date: 2021-02-05
+# Date: 2021-02-26
 # Description: auto-generates the readme.txt file and handle software upgrades
 # and installation
 #-----------------------------------------------------------------------------
@@ -50,6 +50,7 @@ def install():
         # Move supporting files to the correct folders
         os.system('move '+'settings.npz'+' "'+'../vars'+'"')
         os.system('move '+'graphic_4265.png'+' "'+'../vars'+'"')
+        os.system('move '+'waypoint.png'+' "'+'../vars'+'"')
         
         # Notify the user of successful installation
         instructions = 'Next Steps:\n'
@@ -128,6 +129,12 @@ FIRST Robotics Team 4265
 -------------------------------------------------------------------------------------
 Release Notes
 -------------------------------------------------------------------------------------
+
+v2.1.0
+> Fixes a minor installation bug.
+> Placing waypoints is now a left-click.
+> Overhauls the GUI to improve stability.
+> The main GUI window can now be resized in the vertical direction.
 
 v2.0.4
 > Corrects for more pathing issues when the waypoint velocities are set to 0 ft/s.
