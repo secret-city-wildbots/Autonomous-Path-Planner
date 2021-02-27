@@ -3,8 +3,8 @@
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.1.1' # breaking.major-feature-add.minor-feature-or-bug-fix
-versionType = 'release' # options are "dev" or "release"
+versionNumber = '2.1.2' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionType = 'dev' # options are "dev" or "release"
 print('Loading v%s...' %(versionNumber))
 
 # Ignore future and depreciation warnings when not in development
