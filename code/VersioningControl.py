@@ -133,6 +133,9 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
+> The user will now only be asked to save the path on-close if there are remaining un-saved changes.
+> Tweaks to some of the GUI wording for clarity.
+> Fixes a bug which occurred if the user canceled selecting a field map.
 
 v2.1.1
 > Overhauls the path saving code.

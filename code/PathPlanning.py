@@ -1,4 +1,4 @@
-# Date: 2021-02-27
+# Date: 2021-02-28
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
@@ -610,19 +610,22 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
     h_smooths = None
     global hs_ori
     hs_ori = []
+    global flag_newchanges
+    flag_newchanges = False
     
     # Watch for window close event
     def actionWindowClose(evt):
+        global flag_newchanges
         
         # Save the path
-        savePath()
+        if(flag_newchanges): savePath()
         
         # Reset the GUI
         buttonPlan.configure(bg=guiColor_hotgreen,state=tk.NORMAL)
     
     # Set up mouse button click callbacks
     def mouseClick(event):
-        global flag_risingEdge,flag_adding,h_fig
+        global flag_risingEdge,flag_adding,h_fig,flag_newchanges
         sys.stdout.flush()
         button = 'LEFT'
         if(flag_toolwaypoint!=0):
@@ -642,6 +645,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
                             popupPtData(path,x_prior,y_prior,flag_toolwaypoint==1)
                             generatePath()
                             h_fig.canvas.set_window_title(path.loaded_filename+'*')
+                            flag_newchanges = True
                             flag_adding = False
                         except: flag_adding = False # ignore
                 
@@ -656,7 +660,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
                     flag_risingEdge = False
                     
     def savePath():
-        global path
+        global path,flag_newchanges
         
         if(path.numWayPoints()>1):
         
@@ -688,6 +692,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
                 # Update the loaded path name
                 path.loaded_filename = filename
                 h_fig.canvas.set_window_title(path.loaded_filename)
+                flag_newchanges = False
                 
     def generatePath():
         global path,h_im,h_ways,h_smooths,hs_ori
