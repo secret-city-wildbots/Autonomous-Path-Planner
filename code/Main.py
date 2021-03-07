@@ -4,12 +4,12 @@
 
 # Versioning information
 versionNumber = '2.1.2' # breaking.major-feature-add.minor-feature-or-bug-fix
-versionType = 'dev' # options are "dev" or "release"
+versionType = 'stable' # options are "dev" or "stable"
 print('Loading v%s...' %(versionNumber))
 
 # Ignore future and depreciation warnings when not in development
 import warnings 
-if(versionType=='release'):
+if(versionType=='stable'):
     warnings.simplefilter(action='ignore', category=FutureWarning)
     warnings.simplefilter(action='ignore', category=DeprecationWarning)
     warnings.filterwarnings('ignore', category=UserWarning)
@@ -43,7 +43,7 @@ print('RAM available: %i GB \n' %(ram))
 import VersioningControl as version # functions to handle software updates
 import sys # system
 flag_upgraded = False
-if(versionType=='release'):
+if(versionType=='stable'):
     
     # Automatic installation
     version.install()

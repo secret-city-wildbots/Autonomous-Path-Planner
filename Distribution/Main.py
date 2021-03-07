@@ -1,15 +1,15 @@
-# Date: 2021-02-26
+# Date: 2021-02-28
 # Description: a path planner for FRC 2020
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.1.1' # breaking.major-feature-add.minor-feature-or-bug-fix
-versionType = 'release' # options are "dev" or "release"
+versionNumber = '2.1.2' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionType = 'stable' # options are "dev" or "stable"
 print('Loading v%s...' %(versionNumber))
 
 # Ignore future and depreciation warnings when not in development
 import warnings 
-if(versionType=='release'):
+if(versionType=='stable'):
     warnings.simplefilter(action='ignore', category=FutureWarning)
     warnings.simplefilter(action='ignore', category=DeprecationWarning)
     warnings.filterwarnings('ignore', category=UserWarning)
@@ -43,7 +43,7 @@ print('RAM available: %i GB \n' %(ram))
 import VersioningControl as version # functions to handle software updates
 import sys # system
 flag_upgraded = False
-if(versionType=='release'):
+if(versionType=='stable'):
     
     # Automatic installation
     version.install()
@@ -479,6 +479,8 @@ def actionLoadField(*args):
         
         # Start the path planner
         plan.definePath(path,file_I,file_robot,buttonPlan)
+        
+    else: buttonPlan.configure(bg=guiColor_hotgreen,state=tk.NORMAL)
     
 #-----------------------------------------------------------------------------
 
@@ -507,7 +509,7 @@ fieldNames = ['Field Length (ft)',
               'Field Width (ft)',
               'Maximum Robot Velocity (ft/s)',
               'Maximum Robot Acceleration (ft/s²)',
-              'Step Size (in)',
+              'Smooth Point Step Size (in)',
               'Windows DPI Scaling (%)']
 defaults = [path.field_x_real/12.0,
             path.field_y_real/12.0,
@@ -521,8 +523,8 @@ textFields = []
 for i in range(0,len(fieldNames),1):
     [title,field] = gensup.easyTextField(guiwindow,windW,fieldNames[i],str(defaults[i]))
     textFields.append({'title': title, 'field': field})
-buttonApply = tk.Button(guiwindow,text='Apply',fg=guiColor_black,bg=guiColor_hotpink,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.03*windW),command=actionApplySettings)
-buttonPlan = tk.Button(guiwindow,text='Plan',fg=guiColor_black,bg=guiColor_hotgreen,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.03*windW),command=actionLoadField)
+buttonApply = tk.Button(guiwindow,text='Save Settings',fg=guiColor_black,bg=guiColor_hotpink,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.04*windW),command=actionApplySettings)
+buttonPlan = tk.Button(guiwindow,text='Plan New Path',fg=guiColor_black,bg=guiColor_hotgreen,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.04*windW),command=actionLoadField)
 
 # Place all elements
 for i in range(0,len(textFields),1):
