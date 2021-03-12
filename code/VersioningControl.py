@@ -133,6 +133,8 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
+> Adds the ability to "probe" the generated path.
+> Updates the button icons.
 
 v2.1.2
 > Changes "release" tag to "stable" to align with the nomenclature used for the robot projects.
