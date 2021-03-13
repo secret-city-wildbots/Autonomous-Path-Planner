@@ -1,4 +1,4 @@
-# Date: 2021-03-11
+# Date: 2021-03-12
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
@@ -676,6 +676,11 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
             
             if(filename!=''):
                 
+                # If the name has changed, ask the user where they would like to save the file
+                if((filename=='unamed 1')|(filename!=path.loaded_filename)):
+                    path.folder_save = tk.filedialog.askdirectory(initialdir=path.folder_save,title = 'Choose a Location to Save the Path')     
+                    path.folder_save += '/'
+                
                 # Save the .csv file
                 nComp = max(0,path.numSmoothPoints()-path.numWayPoints())
                 df = pandas.DataFrame(data={"Distance (in)": path.smooths_d,
@@ -691,10 +696,10 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
                                             "Way Orientation (deg)": path.ways_o + nComp*[''],
                                             "Way Turn Radius (in)": path.ways_R + nComp*[''],
                                             "Touch this Point": path.ways_T + nComp*['']})
-                df.to_csv("../robot paths/%s.csv" %(filename), sep=',',index=False)
+                df.to_csv(path.folder_save+filename+'.csv', sep=',',index=False)
                 
                 # Save an image of the path planning figure
-                h_fig.savefig('../robot paths/%s.jpg' %(filename))
+                h_fig.savefig(path.folder_save+filename+'.jpg')
                 
                 # Update the loaded path name
                 path.loaded_filename = filename

@@ -133,6 +133,7 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
+> More intelligent path saving options (you can now choose the save location).
 > Adds the ability to "probe" the generated path.
 > Updates the button icons.
 

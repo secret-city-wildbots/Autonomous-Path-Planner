@@ -1,4 +1,4 @@
-# Date: 2021-03-11
+# Date: 2021-03-12
 # Description: a path planner for FRC 2020
 #-----------------------------------------------------------------------------
 
@@ -161,6 +161,7 @@ class Path():
         self.a_max = 12*a_max # (in/s^2) maximum robot acceleration
         self.step_size = step_size # (in) path step size
         self.dpiScaling = dpiScaling # Windows DPI scaling setting
+        self.folder_save = '../robot paths/'
         
         # Reset the path
         self.reset()
@@ -348,6 +349,7 @@ class Path():
             filename = file_csv.split('/')[-1]
             filename = filename.split('.')[0]
             self.loaded_filename = filename
+            self.folder_save = file_csv[:file_csv.rfind('/')+1]
             
         except: pass
             
@@ -505,7 +507,7 @@ def actionLoadField(*args):
         file_robot = filedialog.askopenfilename(initialdir='../robot models/',title = 'Select a Robot Model',filetypes=recognizedImageExtensions)
         
         # Ask the user to load a previous path
-        file_csv = filedialog.askopenfilename(initialdir='../robot paths/',title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
+        file_csv = filedialog.askopenfilename(title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
         path.loadWayPoints(file_csv)
         
         # Start the path planner
