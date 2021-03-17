@@ -1,4 +1,4 @@
-# Date: 2021-02-26
+# Date: 2021-03-16
 # Description: auto-generates the readme.txt file and handle software upgrades
 # and installation
 #-----------------------------------------------------------------------------
@@ -53,6 +53,7 @@ def install():
         os.system('move '+'addwaypoint.png'+' "'+'../vars'+'"')
         os.system('move '+'editwaypoint.png'+' "'+'../vars'+'"')
         os.system('move '+'savepath.png'+' "'+'../vars'+'"')
+        os.system('move '+'probe.png'+' "'+'../vars'+'"')
         
         # Notify the user of successful installation
         instructions = 'Next Steps:\n'
@@ -132,7 +133,7 @@ FIRST Robotics Team 4265
 Release Notes
 -------------------------------------------------------------------------------------
 
-v***
+v2.1.3
 > More intelligent path saving options (you can now choose the save location).
 > Adds the ability to "probe" the generated path.
 > Updates the button icons.

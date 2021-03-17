@@ -1,4 +1,4 @@
-# Date: 2021-02-28
+# Date: 2021-03-12
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
@@ -640,14 +640,21 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
                         # Retrieve information about the selected point
                         [x_prior,y_prior] = event.xdata, event.ydata 
                         
-                        # Display popup window
-                        try:
-                            popupPtData(path,x_prior,y_prior,flag_toolwaypoint==1)
-                            generatePath()
-                            h_fig.canvas.set_window_title(path.loaded_filename+'*')
-                            flag_newchanges = True
+                        if((flag_toolwaypoint==1)|(flag_toolwaypoint==2)):
+                        
+                            # Display popup window
+                            try:
+                                popupPtData(path,x_prior,y_prior,flag_toolwaypoint==1)
+                                generatePath()
+                                h_fig.canvas.set_window_title(path.loaded_filename+'*')
+                                flag_newchanges = True
+                                flag_adding = False
+                            except: flag_adding = False # ignore
+                            
+                        elif(flag_toolwaypoint==3):
+                            fmt_str = path.probe(x_prior,y_prior)
+                            tk.messagebox.showinfo('4265 Path Planner',fmt_str)
                             flag_adding = False
-                        except: flag_adding = False # ignore
                 
     # Set up mouse button unclick callbacks
     def mouseUnClick(event):
@@ -669,6 +676,11 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
             
             if(filename!=''):
                 
+                # If the name has changed, ask the user where they would like to save the file
+                if((filename=='unamed 1')|(filename!=path.loaded_filename)):
+                    path.folder_save = tk.filedialog.askdirectory(initialdir=path.folder_save,title = 'Choose a Location to Save the Path')     
+                    path.folder_save += '/'
+                
                 # Save the .csv file
                 nComp = max(0,path.numSmoothPoints()-path.numWayPoints())
                 df = pandas.DataFrame(data={"Distance (in)": path.smooths_d,
@@ -684,10 +696,10 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
                                             "Way Orientation (deg)": path.ways_o + nComp*[''],
                                             "Way Turn Radius (in)": path.ways_R + nComp*[''],
                                             "Touch this Point": path.ways_T + nComp*['']})
-                df.to_csv("../robot paths/%s.csv" %(filename), sep=',',index=False)
+                df.to_csv(path.folder_save+filename+'.csv', sep=',',index=False)
                 
                 # Save an image of the path planning figure
-                h_fig.savefig('../robot paths/%s.jpg' %(filename))
+                h_fig.savefig(path.folder_save+filename+'.jpg')
                 
                 # Update the loaded path name
                 path.loaded_filename = filename
@@ -796,6 +808,18 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
             global flag_toolwaypoint
             flag_toolwaypoint = 0 # edit waypoint tool is deselected
             
+    class ToolProbePath(ToolToggleBase):
+        description = 'Probe the path'
+        radio_group = 'default'
+        default_toggled = False
+        image = dirPvars+'probe.png'
+        def enable(self,*args):
+            global flag_toolwaypoint
+            flag_toolwaypoint = 3 # probe path tool is selected
+        def disable(self,*args):
+            global flag_toolwaypoint
+            flag_toolwaypoint = 0 # edit waypoint tool is deselected
+            
     # Configure the tool manager
     tm = h_fig.canvas.manager.toolmanager
     h_fig.canvas.manager.toolmanager.remove_tool('help')
@@ -809,6 +833,8 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
     h_fig.canvas.manager.toolbar.add_tool(tm.get_tool('Add Waypoint'),'custom')
     tm.add_tool('Edit Waypoint',ToolEditWaypoint)
     h_fig.canvas.manager.toolbar.add_tool(tm.get_tool('Edit Waypoint'),'custom')
+    tm.add_tool('Probe Path',ToolProbePath)
+    h_fig.canvas.manager.toolbar.add_tool(tm.get_tool('Probe Path'),'custom')
     
     # Connect the mouse button callbacks
     plt.connect('button_press_event',mouseClick)

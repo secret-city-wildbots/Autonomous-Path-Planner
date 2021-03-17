@@ -1,10 +1,10 @@
-# Date: 2021-02-28
+# Date: 2021-03-12
 # Description: a path planner for FRC 2020
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.1.2' # breaking.major-feature-add.minor-feature-or-bug-fix
-versionType = 'stable' # options are "dev" or "stable"
+versionNumber = '2.1.3' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionType = 'release' # options are "dev" or "stable"
 print('Loading v%s...' %(versionNumber))
 
 # Ignore future and depreciation warnings when not in development
@@ -161,6 +161,7 @@ class Path():
         self.a_max = 12*a_max # (in/s^2) maximum robot acceleration
         self.step_size = step_size # (in) path step size
         self.dpiScaling = dpiScaling # Windows DPI scaling setting
+        self.folder_save = '../robot paths/'
         
         # Reset the path
         self.reset()
@@ -348,6 +349,7 @@ class Path():
             filename = file_csv.split('/')[-1]
             filename = filename.split('.')[0]
             self.loaded_filename = filename
+            self.folder_save = file_csv[:file_csv.rfind('/')+1]
             
         except: pass
             
@@ -373,6 +375,37 @@ class Path():
         
         # Calculate the current number of smooth points
         return len(self.smooths_x)
+    
+    def probe(self,x_prior,y_prior):
+        
+        # Convert the click point into inches for search
+        x_prior = x_prior/self.scale_pi # (in)
+        y_prior = (self.field_y_pixels-y_prior)/self.scale_pi # (in)
+        
+        # Find the closest point in the path
+        smooth_index = -1
+        d_closest = None
+        for i in range(0,len(self.smooths_x),1):
+            d = np.sqrt(((self.smooths_x[i]-x_prior)**2)+((self.smooths_y[i]-y_prior)**2))
+            if(d_closest is not None):
+                if(d<d_closest): 
+                    d_closest = d
+                    smooth_index = i
+            else:
+                d_closest = d
+                smooth_index = i
+                
+        # Extract the relevant info and format a text string
+        if(d_closest is not None):
+            fmt_str = ''
+            fmt_str += 'Smooth point at (%0.2f in, %0.2f in) \n' %(self.smooths_x[smooth_index],self.smooths_y[smooth_index])
+            fmt_str += 'Velocity: %0.1f ft/s \n' %(self.smooths_v[smooth_index]/12)
+            fmt_str += 'Orientation: %0.1f° \n' %(self.smooths_o[smooth_index])
+            fmt_str += 'Distance from Start: %0.1f in \n' %(self.smooths_d[smooth_index])
+            fmt_str += 'Time from Start: %0.2f s' %(self.smooths_t[smooth_index])
+        else: fmt_str = 'The path could not be probed.'
+        
+        return fmt_str
         
 # Instantiate the robot path
 path = Path()
@@ -474,7 +507,7 @@ def actionLoadField(*args):
         file_robot = filedialog.askopenfilename(initialdir='../robot models/',title = 'Select a Robot Model',filetypes=recognizedImageExtensions)
         
         # Ask the user to load a previous path
-        file_csv = filedialog.askopenfilename(initialdir='../robot paths/',title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
+        file_csv = filedialog.askopenfilename(title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
         path.loadWayPoints(file_csv)
         
         # Start the path planner
