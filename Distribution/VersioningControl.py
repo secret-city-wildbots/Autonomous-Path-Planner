@@ -150,7 +150,7 @@ def upgrade(versionNumber_current):
         np.save(dirPvars+'versionNumber',versionNumber_current)
         
         # Report out that the software was upgraded
-        notification = 'Installation of v%s of the 4265 Path Planner complete, please review the release notes for any important changes. Select "OK" to close the installer and then you may restart the software using the shortcut.' %(versionNumber_current)
+        notification = 'Installation of v%s of the 4265 Path Planner is complete, please review the release notes for any important changes. Select "OK" to close the installer and then you may restart the software using the shortcut.' %(versionNumber_current)
         print('\n'+notification+'\n')
         messagebox.showwarning('4265 Path Planner',notification)
         flag_upgraded = True
@@ -186,8 +186,8 @@ created by FIRST Robotics Team 4265.
 Release Notes
 -------------------------------------------------------------------------------------
 
-v***
-> Significantly mproves the intial software installation experience.
+v2.2.1
+> Significantly improves the initial software installation experience.
 
 v2.1.3
 > More intelligent path saving options (you can now choose the save location).
@@ -204,7 +204,7 @@ v2.1.1
 > Overhauls the path saving code.
 > Adds a seperate button for editing a waypoint.
 > Fixes a bug in the x-axis label display.
-> Radio group is fixed custom toolbar buttons.
+> Radio group is fixed for custom toolbar buttons.
 
 v2.1.0
 > Fixes a minor installation bug.

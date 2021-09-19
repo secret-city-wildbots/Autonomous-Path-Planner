@@ -186,8 +186,8 @@ created by FIRST Robotics Team 4265.
 Release Notes
 -------------------------------------------------------------------------------------
 
-v***
-> Significantly mproves the intial software installation experience.
+v2.2.1
+> Significantly improves the initial software installation experience.
 
 v2.1.3
 > More intelligent path saving options (you can now choose the save location).
@@ -204,7 +204,7 @@ v2.1.1
 > Overhauls the path saving code.
 > Adds a seperate button for editing a waypoint.
 > Fixes a bug in the x-axis label display.
-> Radio group is fixed custom toolbar buttons.
+> Radio group is fixed for custom toolbar buttons.
 
 v2.1.0
 > Fixes a minor installation bug.

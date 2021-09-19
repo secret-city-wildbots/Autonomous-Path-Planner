@@ -3,7 +3,7 @@
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.2.0' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionNumber = '2.2.1' # breaking.major-feature-add.minor-feature-or-bug-fix
 versionType = 'stable' # options are "dev" or "stable"
 print('Loading v%s...' %(versionNumber))
 
