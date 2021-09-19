@@ -1,4 +1,4 @@
-# Date: 2021-03-16
+# Date: 2021-09-19
 # Description: auto-generates the readme.txt file and handle software upgrades
 # and installation
 #-----------------------------------------------------------------------------
@@ -6,23 +6,64 @@
 # Load external libraries
 import numpy as np # math operations
 import os # hooks into Windows operating system
+import shutil # used for copying files
+import sys # access to the OS
+from tkinter import filedialog # TkInter popup windows
 from tkinter import messagebox # TkInter popup windows
+from win32com.client import Dispatch # used for creating the desktop shortcut
 
 # Hardcoded directory paths
 dirPvars = '../vars/' # persistent variables directory
 
 #-----------------------------------------------------------------------------
 
-def install():
+def resourcePath(relative_path):
+    """
+    Handles file paths transparently for development and pyinstaller
+    """
+    
+    # Choose between the development path and the pyinstaller temp folder path
+    try: base_path = sys._MEIPASS
+    except: base_path = os.path.abspath(".")
+    
+    return os.path.join(base_path,relative_path)
+
+#-----------------------------------------------------------------------------
+
+def install(argv): 
     """
     Performs intial software installation
     Args:
-        None
+        argv: command line arguments
     Returns:
         None
     Saves:
         A bunch
     """
+    
+    # Check if unpacking has to happen first
+    flag_unpack = os.getcwd().split('\\')[-1]!='code'
+    
+    if(flag_unpack):
+        
+        # Ask the user to pick in installation directory
+        messagebox.showinfo('4265 Path Planner','To begin installing the 4265 Path Planner, please choose an installation location.')
+        path_install = filedialog.askdirectory(title='Select an Installation Directory')
+        
+        # Create the folder structure
+        print('Creating the folder structure...')
+        os.mkdir(path_install+'/FRC 4265 Path Planner')
+        os.mkdir(path_install+'/FRC 4265 Path Planner/code')
+    
+        # Copy the executable files
+        print('Unpacking the executable files...')
+        path_src = argv[0].replace('\\','/')
+        shutil.copyfile(path_src,path_install+'/FRC 4265 Path Planner/code/FRC 4265 Path Planner.exe')
+        print('Executable copied successfully.')
+        
+        # Change working directories
+        print('Changing the working directory...')
+        os.chdir(path_install+'/FRC 4265 Path Planner/code')
     
     try: 
         
@@ -33,6 +74,7 @@ def install():
         
         # Indicate that the installation is begining 
         print('Installing the 4265 Path Planner...')
+        messagebox.showinfo('4265 Path Planner','Select "OK" to continue installing the 4265 Path Planner.')
         
         # Create always-local directories
         try: os.mkdir(dirPvars)
@@ -44,25 +86,25 @@ def install():
         try: os.mkdir('../robot models/')
         except: pass
     
-        # Save the Operating System information
-        np.save(dirPvars+'ostype.npy','Windows-Mac')
+        # Ask the user if they would like to create a desktop shortcut
+        create_shortcut = messagebox.askyesno('4265 Path Planner','Would you like to create a desktop shortcut?')
+        if(create_shortcut):
+            print('Creating a desktop shortcut...')
+            desktop = os.path.expanduser('~/Desktop')
+            path = os.path.join(desktop,'FRC 4265 Path Planner.lnk')
+            target = os.path.join(os.getcwd(),'FRC 4265 Path Planner.exe')
+            wDir = os.getcwd()
+            icon = os.path.join(os.getcwd(),'FRC 4265 Path Planner.exe')
+            shell = Dispatch('WScript.Shell')
+            shortcut = shell.CreateShortCut(path)
+            shortcut.Targetpath = target
+            shortcut.WorkingDirectory = wDir
+            shortcut.IconLocation = icon
+            shortcut.save()
             
-        # Move supporting files to the correct folders
-        os.system('move '+'settings.npz'+' "'+'../vars'+'"')
-        os.system('move '+'graphic_4265.png'+' "'+'../vars'+'"')
-        os.system('move '+'addwaypoint.png'+' "'+'../vars'+'"')
-        os.system('move '+'editwaypoint.png'+' "'+'../vars'+'"')
-        os.system('move '+'savepath.png'+' "'+'../vars'+'"')
-        os.system('move '+'probe.png'+' "'+'../vars'+'"')
+        # Save the Operating System information
+        np.save(dirPvars+'ostype.npy','Windows')
         
-        # Notify the user of successful installation
-        instructions = 'Next Steps:\n'
-        instructions += '1. The software will automatically complete the rest of the installation process and then close.\n'
-        instructions += '2. Double-click the "4265 Path Planner.exe" file or create a shortcut.\n'
-        instructions += '3. Review the readme file.\n'
-        print(instructions)
-        messagebox.showinfo('Installation Instructions',instructions)
-
 #-----------------------------------------------------------------------------
 
 def upgrade(versionNumber_current):
@@ -83,12 +125,15 @@ def upgrade(versionNumber_current):
     if(versionNumber_current!=versionNumber_old):
         
         # Notify the user
-        print('Finalizing upgrade from v%s...' %(versionNumber_old))
+        print('Finalizing upgrade from v%s to v%s...' %(versionNumber_old,versionNumber_current))
         
-        # Update the current version number 
-        try: os.remove(dirPvars+'versionNumber.npy')
-        except: pass
-        np.save(dirPvars+'versionNumber',versionNumber_current)
+        # Move supporting files to the correct folders
+        os.system('move '+resourcePath('settings.npz')+' "'+'../vars'+'"')
+        os.system('move '+resourcePath('graphic_4265.png')+' "'+'../vars'+'"')
+        os.system('move '+resourcePath('addwaypoint.png')+' "'+'../vars'+'"')
+        os.system('move '+resourcePath('editwaypoint.png')+' "'+'../vars'+'"')
+        os.system('move '+resourcePath('savepath.png')+' "'+'../vars'+'"')
+        os.system('move '+resourcePath('probe.png')+' "'+'../vars'+'"')
         
         # Delete the old readme file
         try: os.remove(dirPvars+'readme.txt')
@@ -99,11 +144,19 @@ def upgrade(versionNumber_current):
         h_readme.write(textReadme())
         h_readme.close() 
         
+        # Update the current version number 
+        try: os.remove(dirPvars+'versionNumber.npy')
+        except: pass
+        np.save(dirPvars+'versionNumber',versionNumber_current)
+        
         # Report out that the software was upgraded
-        notification = 'Upgrade to v%s complete. Refer to the readme.txt file for any additional instructions. The software will close automatically in 10 seconds...' %(versionNumber_current)
+        notification = 'Installation of v%s of the 4265 Path Planner complete, please review the release notes for any important changes. Select "OK" to close the installer and then you may restart the software using the shortcut.' %(versionNumber_current)
         print('\n'+notification+'\n')
         messagebox.showwarning('4265 Path Planner',notification)
         flag_upgraded = True
+        
+        # Open the release notes
+        os.startfile('%s' %(os.path.abspath('.').replace('\\','/')+'/../vars/readme.txt'))
         
     else: flag_upgraded = False
         
@@ -126,12 +179,15 @@ def textReadme():
 About
 -------------------------------------------------------------------------------------
 
-"4265 Path Planner" An Autonomous Path Planner for the 2021 FIRST Robotics Competition
-FIRST Robotics Team 4265
+The "4265 Path Planner" an autonomous path planner for the FIRST Robotics Competition,
+created by FIRST Robotics Team 4265.
 
 -------------------------------------------------------------------------------------
 Release Notes
 -------------------------------------------------------------------------------------
+
+v***
+> Significantly mproves the intial software installation experience.
 
 v2.1.3
 > More intelligent path saving options (you can now choose the save location).

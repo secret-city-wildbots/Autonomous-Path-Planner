@@ -1,9 +1,9 @@
-# Date: 2021-03-12
-# Description: a path planner for FRC 2020
+# Date: 2021-09-19
+# Description: a path planner for the FIRST Robotics Competition
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.1.4' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionNumber = '2.2.0' # breaking.major-feature-add.minor-feature-or-bug-fix
 versionType = 'dev' # options are "dev" or "stable"
 print('Loading v%s...' %(versionNumber))
 
@@ -46,7 +46,7 @@ flag_upgraded = False
 if(versionType=='stable'):
     
     # Automatic installation
-    version.install()
+    version.install(sys.argv)
 
     # Update the readme file
     flag_upgraded = version.upgrade(versionNumber)
@@ -470,12 +470,12 @@ def actionApplySettings(*args):
         
         # Save to the disk
         np.savez(dirPvars+'defaults',
-                 field_x_real=field_x_real,
-                 field_y_real=field_y_real,
-                 v_max=v_max,
-                 a_max=a_max,
-                 step_size=step_size,
-                 dpiScaling=dpiScaling)
+                  field_x_real=field_x_real,
+                  field_y_real=field_y_real,
+                  v_max=v_max,
+                  a_max=a_max,
+                  step_size=step_size,
+                  dpiScaling=dpiScaling)
         
         # Save in memory
         path.field_x_real = 12.0*field_x_real

@@ -1,4 +1,4 @@
-# Date: 2021-02-27
+# Date: 2021-09-19
 # Description: general support functions
 #-----------------------------------------------------------------------------
 
@@ -82,7 +82,7 @@ def ospath(path,**kwargs):
     if(mode=='folder'):
         
         # Modify a folder name as needed
-        if(ostype_confirmed=='Windows-Mac'): path = path
+        if(ostype_confirmed=='Windows'): path = path
         elif(ostype_confirmed=='Linux'): path = path.replace(' ','_')
         
     elif(mode=='path'):
