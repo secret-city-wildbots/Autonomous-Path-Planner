@@ -1,2 +1,4 @@
 /vars/readme.txt
 .spyproject
+/code/__pycache__
+/vars/defaults.npz

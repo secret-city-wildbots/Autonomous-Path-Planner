@@ -186,9 +186,6 @@ created by FIRST Robotics Team 4265.
 Release Notes
 -------------------------------------------------------------------------------------
 
-v***
-
-
 v2.2.1
 > Significantly improves the initial software installation experience.
 

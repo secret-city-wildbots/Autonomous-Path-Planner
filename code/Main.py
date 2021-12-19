@@ -1,9 +1,9 @@
-# Date: 2021-09-19
+# Date: 2021-12-19
 # Description: a path planner for the FIRST Robotics Competition
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.2.d' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionNumber = '2.2.1' # breaking.major-feature-add.minor-feature-or-bug-fix
 versionType = 'release' # options are "dev" or "stable"
 print('Loading v%s...' %(versionNumber))
 
