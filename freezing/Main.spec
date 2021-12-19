@@ -30,7 +30,7 @@ print('\nHidden Imports:')
 for hidden in hidden_imports: print(hidden)
 
 # Automatically find the version number
-h_log = open('Main.py','r')
+h_log = open('../code/Main.py','r')
 for line in h_log:
     if(line.find('versionNumber')!=-1):
         versionNumber = line.split("'")[1]
@@ -43,7 +43,8 @@ filename = 'FRC 4265 Path Planner_v%s%s' %(versionNumber,versionType)
 print('\nFilename:',filename+'.exe')
 
 print('\nFreezing...\n')
-a = Analysis(['Main.py'],
+sys.path.append('../code/')
+a = Analysis(['../code/Main.py'],
              binaries=missing_dlls,
              datas=data_files,
              hiddenimports=hidden_imports,

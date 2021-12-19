@@ -2,3 +2,7 @@
 .spyproject
 /code/__pycache__
 /vars/defaults.npz
+/freezing/build
+/freezing/dist
+/vars/versionNumber.npy
+/vars/ostype.npy
