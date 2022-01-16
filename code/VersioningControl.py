@@ -186,6 +186,9 @@ created by FIRST Robotics Team 4265.
 Release Notes
 -------------------------------------------------------------------------------------
 
+v2.2.2
+> Updates the default values for the 2022 Rapid React FRC Game.
+
 v2.2.1
 > Significantly improves the initial software installation experience.
 

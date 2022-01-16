@@ -1,10 +1,10 @@
-# Date: 2021-12-19
+# Date: 2022-01-15
 # Description: a path planner for the FIRST Robotics Competition
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.2.1' # breaking.major-feature-add.minor-feature-or-bug-fix
-versionType = 'stable' # options are "dev" or "stable"
+versionNumber = '2.2.2' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionType = 'release' # options are "dev" or "stable"
 print('Loading v%s...' %(versionNumber))
 
 # Ignore future and depreciation warnings when not in development
@@ -147,11 +147,11 @@ class Path():
             try: dpiScaling = h_npz_defaults['dpiScaling']
             except: dpiScaling = 100.0 # backwards compatibility
         except:
-            field_x_real = 52.4375
-            field_y_real = 26.9375 
+            field_x_real = 54.0
+            field_y_real = 27.0 
             v_min = 0.0
             v_max = 15.0
-            a_max = 3.0
+            a_max = 8.0
             step_size = 1.0
             dpiScaling = 100.0
         self.field_x_real = 12*field_x_real # (in) length of the field
