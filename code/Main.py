@@ -3,8 +3,8 @@
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.2.4' # breaking.major-feature-add.minor-feature-or-bug-fix
-versionType = 'dev' # options are "dev" or "stable"
+versionNumber = '2.2.5' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionType = 'stable' # options are "dev" or "stable"
 print('Loading v%s...' %(versionNumber))
 
 # Ignore future and depreciation warnings when not in development
@@ -321,7 +321,7 @@ class Path():
             
     def loadWayPoints(self,file_csv):
         
-        try: 
+        try:
             
             # Load the .csv file
             df = pandas.read_csv(file_csv)
@@ -350,7 +350,7 @@ class Path():
             filename = filename.split('.')[0]
             self.loaded_filename = filename
             self.folder_save = file_csv[:file_csv.rfind('/')+1]
-            
+        
         except: pass
             
     def numWayPoints(self):
