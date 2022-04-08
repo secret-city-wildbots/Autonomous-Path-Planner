@@ -4,7 +4,7 @@
 
 # Versioning information
 versionNumber = '2.2.6' # breaking.major-feature-add.minor-feature-or-bug-fix
-versionType = 'dev' # options are "dev" or "stable"
+versionType = 'stable' # options are "dev" or "stable"
 print('Loading v%s...' %(versionNumber))
 
 # Ignore future and depreciation warnings when not in development
@@ -103,7 +103,7 @@ try:
     ipython = get_ipython() # needed to run magic commands
     ipython.magic('matplotlib qt') # display figures in a separate window
 except: pass
-plt.rcParams.update({'font.size': 24}) # change the default font size for plots
+plt.rcParams.update({'font.size': 18}) # change the default font size for plots
 plt.rcParams.update({'figure.max_open_warning': False}) # disable warning about too opening too many figures - don't need that kind of negativity 
 plt.rcParams['keymap.quit'] = '' # disable matplotlib hotkeys
 plt.rcParams['keymap.save'] = '' # disable matplotlib hotkeys
@@ -358,7 +358,7 @@ class Path():
         # Calculate the current number of way points
         return len(self.ways_x)
             
-    def updateSmoothPath(self,ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth,tchs_smooth):
+    def updateSmoothPath(self,ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth,tchs_smooth,omgs_smooth):
 
         # Update the smooth path
         self.smooths_x = ptxs_smooth
@@ -370,6 +370,7 @@ class Path():
         self.smooths_t = tims_smooth
         self.total_t = tims_smooth[-1]
         self.smooths_T = tchs_smooth
+        self.smooths_w = omgs_smooth
         
     def numSmoothPoints(self):
         

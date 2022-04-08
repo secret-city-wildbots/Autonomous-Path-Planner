@@ -1,4 +1,4 @@
-# Date: 2021-03-12
+# Date: 2021-04-08
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
@@ -348,9 +348,19 @@ def pathSolution(path):
         delta_s = dsts_smooth[i]-dsts_smooth[i-1]
         o_running += delta_o_per_s*delta_s
         oris_smooth.append(o_running%360)
+        
+    # Calculate the smooth rotational velocity
+    omgs_smooth = []
+    omgs_smooth.append(0)
+    for i in range(1,len(ptxs_smooth),1):  
+        ori_delta = oris_smooth[i]-oris_smooth[i-1]
+        if(abs(ori_delta)>180.0): ori_delta = ori_delta-360.0 # handle wrap at 0 degrees
+        omg = ori_delta/(tims_smooth[i]-tims_smooth[i-1])
+        omgs_smooth.append(omg)
+    omgs_smooth[-1] = 0 # ensure that the final feed-forward velocity is zero
     
     # Update the path
-    path.updateSmoothPath(ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth,tchs_smooth)
+    path.updateSmoothPath(ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth,tchs_smooth,omgs_smooth)
     
     return path
 
@@ -690,6 +700,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
                                             "Velocity (in/s)": path.smooths_v,
                                             "Orientation (deg)": path.smooths_o,
                                             "Touch": path.smooths_T,
+                                            "Rotational Velocity (deg/s)": path.smooths_w,
                                             "Way X (in)": path.ways_x + nComp*[''],
                                             "Way Y (in)": path.ways_y + nComp*[''],
                                             "Way Velocity (in/s)": path.ways_v + nComp*[''],

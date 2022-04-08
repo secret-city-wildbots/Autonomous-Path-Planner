@@ -186,7 +186,9 @@ created by FIRST Robotics Team 4265.
 Release Notes
 -------------------------------------------------------------------------------------
 
-v***
+v2.2.6
+> Adds a feed-forward rotational velocity.
+> Reduces the font size on the generated path figures.
 > Allows for DPI scaling values less than 100%.
 > More user selections will be remembered between sessions.
 
