@@ -463,7 +463,7 @@ def actionApplySettings(*args):
     [v_max,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=1.0,vmax=30.0)
     [a_max,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=0.5,vmax=100.0)
     [step_size,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=1.0,vmax=100.0)
-    [dpiScaling,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=100.0)
+    [dpiScaling,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=50.0)
     
     # Save the error-free entries in the correct units
     if(flags):

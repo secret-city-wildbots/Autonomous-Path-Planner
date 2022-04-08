@@ -187,6 +187,7 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
+> Allows for DPI scaling values less than 100%.
 > More user selections will be remembered between sessions.
 
 v2.2.5
