@@ -187,6 +187,7 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
+> More user selections will be remembered between sessions.
 
 v2.2.5
 > Maybe this one work-o with opening old paths.

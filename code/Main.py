@@ -1,4 +1,4 @@
-# Date: 2022-01-15
+# Date: 2022-04-08
 # Description: a path planner for the FIRST Robotics Competition
 #-----------------------------------------------------------------------------
 
@@ -499,15 +499,19 @@ def actionLoadField(*args):
     path.reset()
     
     # Ask the user to load a field map
-    file_I = filedialog.askopenfilename(initialdir='../field drawings/',title = 'Select a Field Drawing',filetypes=recognizedImageExtensions)
+    try: file_I = str(np.load(dirPvars+'rememberedField.npy'))
+    except: file_I = filedialog.askopenfilename(initialdir='../field drawings/',title = 'Select a Field Drawing',filetypes=recognizedImageExtensions)
+    np.save(dirPvars+'rememberedField.npy',file_I)
     
     if(file_I!=''):
     
         # Ask the user to load a robot model
-        file_robot = filedialog.askopenfilename(initialdir='../robot models/',title = 'Select a Robot Model',filetypes=recognizedImageExtensions)
+        try: file_robot = str(np.load(dirPvars+'rememberedRobot.npy'))
+        except: file_robot = filedialog.askopenfilename(initialdir='../robot models/',title = 'Select a Robot Model',filetypes=recognizedImageExtensions)
+        np.save(dirPvars+'rememberedRobot.npy',file_robot)
         
         # Ask the user to load a previous path
-        file_csv = filedialog.askopenfilename(title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
+        file_csv = filedialog.askopenfilename(initialdir='',title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
         path.loadWayPoints(file_csv)
         
         # Start the path planner

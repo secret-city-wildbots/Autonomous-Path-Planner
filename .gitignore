@@ -6,3 +6,5 @@
 /freezing/dist
 /vars/versionNumber.npy
 /vars/ostype.npy
+/vars/rememberedRobot.npy
+/vars/rememberedField.npy
