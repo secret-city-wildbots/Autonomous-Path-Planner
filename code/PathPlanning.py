@@ -1,4 +1,4 @@
-# Date: 2021-04-08
+# Date: 2021-04-09
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
@@ -320,9 +320,14 @@ def pathSolution(path):
     wayNum = 0
     o_running = path.ways_o[0] # intialize to start orientation
     oris_smooth = [o_running]
+    omgs_smooth = [0]
     for i in range(1,len(ptxs_smooth),1):
         
         if(idxs_smooth[i]!=wayNum):
+            
+            # Start of a new segement, fix any accumulated issues
+            o_running = path.ways_o[wayNum]
+            oris_smooth[-1] = path.ways_o[wayNum]
             
             # Determine the requested delta o
             wayNum += 1
@@ -338,26 +343,32 @@ def pathSolution(path):
                 if(delta_oseg1<delta_oseg2): delta_o = -delta_oseg1
                 else: delta_o = delta_oseg2
                 
-            # Travel distance avalaible in this segment
-            delta_s_seg = dsts_segs[wayNum] 
-                
-            # Normalize the delta o per unit distance
-            delta_o_per_s = delta_o/delta_s_seg
+            # Travel time available in this segment
+            t_seg_start = tims_smooth[i]
+            for ii in range(i,len(ptxs_smooth),1):
+                if(idxs_smooth[ii]!=wayNum): break
+            t_seg_end = tims_smooth[ii]
+            delta_t_seg = t_seg_end - t_seg_start
+            t_seg_decel = path.omega_fraction*delta_t_seg + t_seg_start
+            
+            # Calculate the cruising rotational velocity
+            omega_cruise = 2*delta_o/((1+path.omega_fraction)*delta_t_seg)
+            
+        # Calculate the feed-forward rotational velocity
+        t_i = tims_smooth[i]
+        if(t_i<t_seg_decel):
+            omega_i = omega_cruise # cruise stage
+        else:
+            omega_i = omega_cruise - omega_cruise*(t_i-t_seg_decel)/(t_seg_end-t_seg_decel) # deceleration stage
+        omgs_smooth.append(omega_i)
             
         # Update the robot's current orientation
-        delta_s = dsts_smooth[i]-dsts_smooth[i-1]
-        o_running += delta_o_per_s*delta_s
+        delta_o_i = omega_i*(tims_smooth[i]-tims_smooth[i-1])
+        o_running += delta_o_i
         oris_smooth.append(o_running%360)
         
-    # Calculate the smooth rotational velocity
-    omgs_smooth = []
-    omgs_smooth.append(0)
-    for i in range(1,len(ptxs_smooth),1):  
-        ori_delta = oris_smooth[i]-oris_smooth[i-1]
-        if(abs(ori_delta)>180.0): ori_delta = ori_delta-360.0 # handle wrap at 0 degrees
-        omg = ori_delta/(tims_smooth[i]-tims_smooth[i-1])
-        omgs_smooth.append(omg)
-    omgs_smooth[-1] = 0 # ensure that the final feed-forward velocity is zero
+    # Ensure that the final feed-forward velocity is zero
+    omgs_smooth[-1] = 0 
     
     # Update the path
     path.updateSmoothPath(ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth,tchs_smooth,omgs_smooth)
@@ -754,7 +765,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
         if(path.numWayPoints()>1):
             
             # Calculate the path
-            try: 
+            try:
                 path = pathSolution(path)
                 flag_solution = True
             except: 

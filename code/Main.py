@@ -1,10 +1,10 @@
-# Date: 2022-04-08
+# Date: 2022-04-09
 # Description: a path planner for the FIRST Robotics Competition
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.2.6' # breaking.major-feature-add.minor-feature-or-bug-fix
-versionType = 'stable' # options are "dev" or "stable"
+versionNumber = '2.2.7' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionType = 'release' # options are "dev" or "stable"
 print('Loading v%s...' %(versionNumber))
 
 # Ignore future and depreciation warnings when not in development
@@ -162,6 +162,7 @@ class Path():
         self.step_size = step_size # (in) path step size
         self.dpiScaling = dpiScaling # Windows DPI scaling setting
         self.folder_save = '../robot paths/'
+        self.omega_fraction = 0.6 # fraction of the time of a segment to rotate at cruise velocity
         
         # Reset the path
         self.reset()
