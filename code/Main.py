@@ -162,7 +162,7 @@ class Path():
         self.step_size = step_size # (in) path step size
         self.dpiScaling = dpiScaling # Windows DPI scaling setting
         self.folder_save = '../robot paths/'
-        self.omega_fraction = 0.6 # fraction of the time of a segment to rotate at cruise velocity
+        self.omega_fraction = 0.3 # fraction of the time of a segment to rotate at cruise velocity
         
         # Reset the path
         self.reset()
