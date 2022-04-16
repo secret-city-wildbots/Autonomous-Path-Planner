@@ -1,9 +1,9 @@
-# Date: 2022-01-15
+# Date: 2022-04-09
 # Description: a path planner for the FIRST Robotics Competition
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.2.5' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionNumber = '2.2.7' # breaking.major-feature-add.minor-feature-or-bug-fix
 versionType = 'stable' # options are "dev" or "stable"
 print('Loading v%s...' %(versionNumber))
 
@@ -103,7 +103,7 @@ try:
     ipython = get_ipython() # needed to run magic commands
     ipython.magic('matplotlib qt') # display figures in a separate window
 except: pass
-plt.rcParams.update({'font.size': 24}) # change the default font size for plots
+plt.rcParams.update({'font.size': 18}) # change the default font size for plots
 plt.rcParams.update({'figure.max_open_warning': False}) # disable warning about too opening too many figures - don't need that kind of negativity 
 plt.rcParams['keymap.quit'] = '' # disable matplotlib hotkeys
 plt.rcParams['keymap.save'] = '' # disable matplotlib hotkeys
@@ -162,6 +162,7 @@ class Path():
         self.step_size = step_size # (in) path step size
         self.dpiScaling = dpiScaling # Windows DPI scaling setting
         self.folder_save = '../robot paths/'
+        self.omega_fraction = 0.3 # fraction of the time of a segment to rotate at cruise velocity
         
         # Reset the path
         self.reset()
@@ -358,7 +359,7 @@ class Path():
         # Calculate the current number of way points
         return len(self.ways_x)
             
-    def updateSmoothPath(self,ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth,tchs_smooth):
+    def updateSmoothPath(self,ptxs_smooth,ptys_smooth,vels_smooth,oris_smooth,dsts_smooth,tims_smooth,tchs_smooth,omgs_smooth):
 
         # Update the smooth path
         self.smooths_x = ptxs_smooth
@@ -370,6 +371,7 @@ class Path():
         self.smooths_t = tims_smooth
         self.total_t = tims_smooth[-1]
         self.smooths_T = tchs_smooth
+        self.smooths_w = omgs_smooth
         
     def numSmoothPoints(self):
         
@@ -463,7 +465,7 @@ def actionApplySettings(*args):
     [v_max,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=1.0,vmax=30.0)
     [a_max,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=0.5,vmax=100.0)
     [step_size,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=1.0,vmax=100.0)
-    [dpiScaling,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=100.0)
+    [dpiScaling,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=50.0)
     
     # Save the error-free entries in the correct units
     if(flags):
@@ -499,15 +501,19 @@ def actionLoadField(*args):
     path.reset()
     
     # Ask the user to load a field map
-    file_I = filedialog.askopenfilename(initialdir='../field drawings/',title = 'Select a Field Drawing',filetypes=recognizedImageExtensions)
+    try: file_I = str(np.load(dirPvars+'rememberedField.npy'))
+    except: file_I = filedialog.askopenfilename(initialdir='../field drawings/',title = 'Select a Field Drawing',filetypes=recognizedImageExtensions)
+    np.save(dirPvars+'rememberedField.npy',file_I)
     
     if(file_I!=''):
     
         # Ask the user to load a robot model
-        file_robot = filedialog.askopenfilename(initialdir='../robot models/',title = 'Select a Robot Model',filetypes=recognizedImageExtensions)
+        try: file_robot = str(np.load(dirPvars+'rememberedRobot.npy'))
+        except: file_robot = filedialog.askopenfilename(initialdir='../robot models/',title = 'Select a Robot Model',filetypes=recognizedImageExtensions)
+        np.save(dirPvars+'rememberedRobot.npy',file_robot)
         
         # Ask the user to load a previous path
-        file_csv = filedialog.askopenfilename(title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
+        file_csv = filedialog.askopenfilename(initialdir='',title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
         path.loadWayPoints(file_csv)
         
         # Start the path planner

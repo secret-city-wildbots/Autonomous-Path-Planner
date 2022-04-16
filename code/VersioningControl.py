@@ -186,6 +186,16 @@ created by FIRST Robotics Team 4265.
 Release Notes
 -------------------------------------------------------------------------------------
 
+v2.2.7
+> Adds an acceleration phase to the rotational velocity feed-forward.
+> Fixes orientation some overshooting issues.
+
+v2.2.6
+> Adds a feed-forward rotational velocity.
+> Reduces the font size on the generated path figures.
+> Allows for DPI scaling values less than 100%.
+> More user selections will be remembered between sessions.
+
 v2.2.5
 > Maybe this one work-o with opening old paths.
 
