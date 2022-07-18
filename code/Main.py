@@ -409,7 +409,30 @@ class Path():
         else: fmt_str = 'The path could not be probed.'
         
         return fmt_str
+    
+    def move(self,x_prior,y_prior,x_new,y_new):
         
+        # Convert the candidate points into inches for search
+        x_prior = x_prior/self.scale_pi # (in)
+        y_prior = (self.field_y_pixels-y_prior)/self.scale_pi # (in)
+        
+        # Find the closest point to edit
+        way_index = -1
+        d_edit = None
+        for i in range(0,len(self.ways_x),1):
+            d = np.sqrt(((self.ways_x[i]-x_prior)**2)+((self.ways_y[i]-y_prior)**2))
+            if(d_edit is not None):
+                if(d<d_edit): 
+                    d_edit = d
+                    way_index = i
+            else:
+                d_edit = d
+                way_index = i      
+           
+        # Update the waypoint position
+        self.ways_x[way_index] = x_new/self.scale_pi # (in)
+        self.ways_y[way_index] = (self.field_y_pixels-y_new)/self.scale_pi # (in)
+    
 # Instantiate the robot path
 path = Path()
     

@@ -21,6 +21,7 @@ dirPvars = '../vars/' # persistent variables directory
 
 # Load persistent variables
 from Constants import(dispRes,
+                      softwareName,
                       guiColor_black,
                       guiColor_offwhite,
                       guiColor_hotgreen,
@@ -434,8 +435,8 @@ def popupPtData(path,x_prior,y_prior,flag_newPt):
     # Define the popup window
     popwindow = tk.Toplevel()
     popwindow.title('Waypoint')
-    windW = 250 # window width
-    windH = 700 # window height 
+    windW = 300 # window width
+    windH = 600 # window height 
     popwindow.geometry(str(windW)+'x'+str(windH))
     popwindow.configure(background=guiColor_offwhite)
     popwindow.resizable(width=False, height=False)
@@ -465,8 +466,9 @@ def popupPtData(path,x_prior,y_prior,flag_newPt):
     # Set up the elements
     textFields = []
     for i in range(0,len(fieldNames),1):
+        spacer = tk.Label(popwindow,text='',bg=guiColor_offwhite,font=(guiFontType_normal,5),anchor='w')
         [title,field] = gensup.easyTextField(popwindow,windW,fieldNames[i],str(defaults[i]))
-        textFields.append({'title': title, 'field': field})
+        textFields.append({'title': title, 'field': field, 'spacer': spacer})
     if(way_index==-1): buttonName = 'Create'
     else: buttonName = 'Edit'
     if(way_index==-1): textFields[0]['field'].configure(state=tk.DISABLED)
@@ -478,8 +480,9 @@ def popupPtData(path,x_prior,y_prior,flag_newPt):
     for i in range(0,len(textFields),1):
         textFields[i]['title'].pack(fill='both')
         textFields[i]['field'].pack()
-    buttonSave.pack(pady=20)
-    buttonDelete.pack(pady=10)
+        textFields[i]['spacer'].pack()
+    buttonSave.pack(pady=5,fill='x')
+    buttonDelete.pack(pady=5,fill='x')
     
     # Run the GUI
     popwindow.mainloop()
@@ -633,6 +636,8 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
     hs_ori = []
     global flag_newchanges
     flag_newchanges = False
+    global firstclick
+    firstclick = None
     
     # Watch for window close event
     def actionWindowClose(evt):
@@ -646,13 +651,14 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
     
     # Set up mouse button click callbacks
     def mouseClick(event):
-        global flag_risingEdge,flag_adding,h_fig,flag_newchanges
+        global flag_risingEdge,flag_adding,h_fig,flag_newchanges,firstclick
         sys.stdout.flush()
         button = 'LEFT'
         if(flag_toolwaypoint!=0):
             if(str(event.button).find(button)!=-1):
                 if(flag_risingEdge==False):
                     flag_risingEdge = True
+                    if(flag_toolwaypoint!=4): firstclick = None # make sure to reset
                     if(not flag_adding):
                     
                         # Block additional popups
@@ -674,9 +680,20 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
                             
                         elif(flag_toolwaypoint==3):
                             fmt_str = path.probe(x_prior,y_prior)
-                            tk.messagebox.showinfo('4265 Path Planner',fmt_str)
+                            tk.messagebox.showinfo(softwareName,fmt_str)
                             flag_adding = False
-                
+                            
+                        elif(flag_toolwaypoint==4):
+                            if(firstclick is None):
+                                firstclick = (x_prior,y_prior)
+                            else:
+                                path.move(firstclick[0],firstclick[1],x_prior,y_prior)
+                                generatePath()
+                                h_fig.canvas.set_window_title(path.loaded_filename+'*')
+                                flag_newchanges = True
+                                firstclick = None
+                            flag_adding = False
+                            
     # Set up mouse button unclick callbacks
     def mouseUnClick(event):
         global flag_risingEdge
@@ -830,6 +847,18 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
             global flag_toolwaypoint
             flag_toolwaypoint = 0 # edit waypoint tool is deselected
             
+    class ToolMoveWaypoint(ToolToggleBase):
+        description = 'Moves a waypoint'
+        radio_group = 'default'
+        default_toggled = False
+        image = dirPvars+'movewaypoint.png'
+        def enable(self,*args):
+            global flag_toolwaypoint
+            flag_toolwaypoint = 4 # move waypoint tool is selected
+        def disable(self,*args):
+            global flag_toolwaypoint
+            flag_toolwaypoint = 0 # move waypoint tool is deselected
+            
     class ToolProbePath(ToolToggleBase):
         description = 'Probe the path'
         radio_group = 'default'
@@ -855,6 +884,8 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan):
     h_fig.canvas.manager.toolbar.add_tool(tm.get_tool('Add Waypoint'),'custom')
     tm.add_tool('Edit Waypoint',ToolEditWaypoint)
     h_fig.canvas.manager.toolbar.add_tool(tm.get_tool('Edit Waypoint'),'custom')
+    tm.add_tool('Move Waypoint',ToolMoveWaypoint)
+    h_fig.canvas.manager.toolbar.add_tool(tm.get_tool('Move Waypoint'),'custom')
     tm.add_tool('Probe Path',ToolProbePath)
     h_fig.canvas.manager.toolbar.add_tool(tm.get_tool('Probe Path'),'custom')
     
