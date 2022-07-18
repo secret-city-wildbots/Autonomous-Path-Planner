@@ -3,7 +3,7 @@
 #-----------------------------------------------------------------------------
 
 # Hidden settings
-softwareName = '4265 Path Planner'
+softwareName = 'Path Planner'
 dirHome = '../code/' # return location of the home (code) directory
 dirPvars = '../vars/' # persistent variables directory
 recognizedImageExtensions = [('Images','*.jpg *.jpeg *.png *.tif *.tiff')] 

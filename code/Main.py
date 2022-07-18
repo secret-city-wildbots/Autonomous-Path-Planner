@@ -79,6 +79,7 @@ from Constants import(softwareName,
                       guiColor_offwhite,
                       guiColor_hotpink,
                       guiColor_hotgreen,
+                      guiColor_hotyellow,
                       guiFontSize_large,
                       guiFontSize_small,
                       guiFontType_normal)
@@ -492,6 +493,23 @@ def actionApplySettings(*args):
         
 #-----------------------------------------------------------------------------
 
+def actionResetFiles(*args):
+    """
+    Reset previous file selections
+    """
+    
+    # Confirm intention to reet the previous file selections
+    userChoice = tk.messagebox.askyesno(softwareName,'Are you sure you want to reset all previous file selections (e.g., field maps, robot models, and field calibrations)?')
+    
+    # Delete file selections
+    if(userChoice): 
+        try: os.remove(dirPvars+'rememberedField.npy')
+        except: pass
+        try: os.remove(dirPvars+'rememberedRobot.npy')
+        except: pass
+        
+#-----------------------------------------------------------------------------
+
 def actionLoadField(*args):
     """
     Loads the field map and allows the user to start planning a path
@@ -530,7 +548,7 @@ def actionLoadField(*args):
 guiwindow = tk.Tk()
 guiwindow.title(softwareName)
 windW = int(0.30*1080) # window width
-windH = int(0.80*1920) # window height 
+windH = int(0.70*1920) # window height 
 guiwindow.geometry(str(windW)+'x'+str(windH))
 guiwindow.configure(background=guiColor_offwhite)
 guiwindow.resizable(width=False,height=True)
@@ -566,16 +584,20 @@ defaults = [path.field_x_real/12.0,
 textFields = []
 for i in range(0,len(fieldNames),1):
     [title,field] = gensup.easyTextField(guiwindow,windW,fieldNames[i],str(defaults[i]))
-    textFields.append({'title': title, 'field': field})
+    spacer = tk.Label(guiwindow,text='',bg=guiColor_offwhite,font=(guiFontType_normal,5),anchor='w')
+    textFields.append({'title': title, 'field': field, 'spacer': spacer})
 buttonApply = tk.Button(guiwindow,text='Save Settings',fg=guiColor_black,bg=guiColor_hotpink,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.04*windW),command=actionApplySettings)
+buttonReset = tk.Button(guiwindow,text='Reset File Selections',fg=guiColor_black,bg=guiColor_hotyellow,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.04*windW),command=actionResetFiles)
 buttonPlan = tk.Button(guiwindow,text='Plan New Path',fg=guiColor_black,bg=guiColor_hotgreen,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.04*windW),command=actionLoadField)
 
 # Place all elements
 for i in range(0,len(textFields),1):
-    textFields[i]['title'].pack(fill='both')
-    textFields[i]['field'].pack()
-buttonApply.pack(pady=10)
-buttonPlan.pack(pady=10)
+    textFields[i]['title'].pack(fill='x')
+    textFields[i]['field'].pack(fill='x',pady=1)
+    textFields[i]['spacer'].pack(fill='x')
+buttonApply.pack(pady=3,fill='x')
+buttonReset.pack(pady=3,fill='x')
+buttonPlan.pack(pady=3,fill='x')
 logo.pack(pady=10,expand=True)
 
 # Run the GUI window

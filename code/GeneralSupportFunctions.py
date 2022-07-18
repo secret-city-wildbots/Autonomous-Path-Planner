@@ -167,7 +167,7 @@ def easyTextField(guiwindow,windW,titletext,default):
         None
     """
     
-    title = tk.Label(guiwindow,text='\n'+titletext,fg=guiColor_white,bg=guiColor_offwhite,font=(guiFontType_normal,guiFontSize_large),height=2,width=len(titletext)+1,anchor='w')
+    title = tk.Label(guiwindow,text=titletext,fg=guiColor_white,bg=guiColor_offwhite,font=(guiFontType_normal,guiFontSize_large),height=1,width=len(titletext)+1,anchor='w')
     field = tk.Entry(guiwindow,textvariable=tk.StringVar(guiwindow),fg=guiColor_black,bg=guiColor_white,font=(guiFontType_normal,guiFontSize_large),width=int(0.5*windW))
     field.insert(0,default)
     

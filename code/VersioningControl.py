@@ -187,6 +187,7 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
+> Users can now reset file selections from the GUI.
 > The rotational cruise velocity fraction can now be configured as a setting.
 > Tweaks the GUI layout.
 > Hardcoded constants are now handled more robustly.
