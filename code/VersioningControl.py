@@ -187,6 +187,7 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
+> Hardcoded constants are now handled more robustly.
 
 v2.2.7
 > Adds an acceleration phase to the rotational velocity feed-forward.

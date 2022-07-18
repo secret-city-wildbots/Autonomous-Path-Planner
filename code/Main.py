@@ -1,4 +1,4 @@
-# Date: 2022-04-09
+# Date: 2022-07-17
 # Description: a path planner for the FIRST Robotics Competition
 #-----------------------------------------------------------------------------
 
@@ -73,18 +73,15 @@ import GeneralSupportFunctions as gensup # general support functions
 import PathPlanning as plan # pathe planner
 
 # Load persistent variables
-h_npz_settings = np.load(dirPvars+'settings.npz',allow_pickle=True)
-softwareName = str(h_npz_settings['softwareName'])
-recognizedImageExtensions = np.ndarray.tolist(h_npz_settings['recognizedImageExtensions'])
-guiColor_black = h_npz_settings['guiColor_black']
-guiColor_white = h_npz_settings['guiColor_white']
-guiColor_offwhite = h_npz_settings['guiColor_offwhite']
-guiColor_hotpink = h_npz_settings['guiColor_hotpink']
-guiColor_hotgreen = h_npz_settings['guiColor_hotgreen']
-guiFontSize_large = h_npz_settings['guiFontSize_large']
-guiFontSize_small = h_npz_settings['guiFontSize_small']
-guiFontType_normal = h_npz_settings['guiFontType_normal']
-guiFontType_uniform = h_npz_settings['guiFontType_uniform']
+from Constants import(softwareName,
+                      recognizedImageExtensions,
+                      guiColor_black,
+                      guiColor_offwhite,
+                      guiColor_hotpink,
+                      guiColor_hotgreen,
+                      guiFontSize_large,
+                      guiFontSize_small,
+                      guiFontType_normal)
 
 # Load defaults
 try: h_npz_defaults = np.load(dirPvars+'defaults.npz',allow_pickle=True)

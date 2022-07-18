@@ -1,4 +1,4 @@
-# Date: 2021-04-09
+# Date: 2022-07-17
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
@@ -20,21 +20,13 @@ import GeneralSupportFunctions as gensup # general support functions
 dirPvars = '../vars/' # persistent variables directory
 
 # Load persistent variables
-h_npz_settings = np.load(dirPvars+'settings.npz',allow_pickle=True)
-softwareName = str(h_npz_settings['softwareName'])
-figSize = list(h_npz_settings['figSize'])
-dispRes = float(h_npz_settings['dispRes'])
-guiColor_black = h_npz_settings['guiColor_black']
-guiColor_white = h_npz_settings['guiColor_white']
-guiColor_offwhite = h_npz_settings['guiColor_offwhite']
-guiColor_darkgreen = h_npz_settings['guiColor_darkgreen']
-guiColor_cherryred = h_npz_settings['guiColor_cherryred']
-guiColor_hotgreen = h_npz_settings['guiColor_hotgreen']
-guiColor_hotyellow = h_npz_settings['guiColor_hotyellow']
-guiFontSize_large = h_npz_settings['guiFontSize_large']
-guiFontSize_small = h_npz_settings['guiFontSize_small']
-guiFontType_normal = h_npz_settings['guiFontType_normal']
-guiFontType_uniform = h_npz_settings['guiFontType_uniform']
+from Constants import(dispRes,
+                      guiColor_black,
+                      guiColor_offwhite,
+                      guiColor_hotgreen,
+                      guiColor_hotyellow,
+                      guiFontSize_large,
+                      guiFontType_normal)
 
 #-----------------------------------------------------------------------------
 

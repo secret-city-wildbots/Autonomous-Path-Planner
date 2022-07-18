@@ -1,4 +1,4 @@
-# Date: 2021-09-19
+# Date: 2022-07-17
 # Description: general support functions
 #-----------------------------------------------------------------------------
 
@@ -15,22 +15,17 @@ import tkinter as tk # TkInter UI backbone
 dirPvars = '../vars/' # persistent variables directory
 
 # Load persistent variables
-try:
-    h_npz_settings = np.load(dirPvars+'settings.npz',allow_pickle=True)
-    softwareName = str(h_npz_settings['softwareName'])
-    figSize = list(h_npz_settings['figSize'])
-    guiColor_black = h_npz_settings['guiColor_black']
-    guiColor_white = h_npz_settings['guiColor_white']
-    guiColor_offwhite = h_npz_settings['guiColor_offwhite']
-    guiColor_darkgreen = h_npz_settings['guiColor_darkgreen']
-    guiColor_cherryred = h_npz_settings['guiColor_cherryred']
-    guiColor_hotpink = h_npz_settings['guiColor_hotpink']
-    guiColor_hotgreen = h_npz_settings['guiColor_hotgreen']
-    guiFontSize_large = h_npz_settings['guiFontSize_large']
-    guiFontSize_small = h_npz_settings['guiFontSize_small']
-    guiFontType_normal = h_npz_settings['guiFontType_normal']
-    guiFontType_uniform = h_npz_settings['guiFontType_uniform']
-except: pass # safe for initial installation loading
+from Constants import(softwareName,
+                      guiColor_black,
+                      guiColor_offwhite,
+                      guiColor_hotpink,
+                      guiColor_hotgreen,
+                      guiColor_darkgreen,
+                      guiColor_cherryred,
+                      guiColor_white,
+                      guiFontSize_large,
+                      guiFontType_normal,
+                      figSize)
 
 # Check the specified operating system
 try: ostype = str(np.load(dirPvars+'ostype.npy'))
