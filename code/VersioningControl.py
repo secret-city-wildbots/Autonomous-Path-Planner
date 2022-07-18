@@ -187,6 +187,7 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
+> Tweaks the GUI layout.
 > Hardcoded constants are now handled more robustly.
 
 v2.2.7

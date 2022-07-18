@@ -523,8 +523,8 @@ def actionLoadField(*args):
 # Open the GUI window
 guiwindow = tk.Tk()
 guiwindow.title(softwareName)
-windW = int(0.28*min(1080,minScrnDim)) # window width
-windH = int(0.65*min(1080,minScrnDim)) # window height 
+windW = int(0.30*1080) # window width
+windH = int(0.80*1920) # window height 
 guiwindow.geometry(str(windW)+'x'+str(windH))
 guiwindow.configure(background=guiColor_offwhite)
 guiwindow.resizable(width=False,height=True)
@@ -538,7 +538,7 @@ guiwindow.protocol('WM_DELETE_WINDOW',actionQuit)
 # Set up the logos
 logo = tk.Canvas(guiwindow,width=int(564*guiScaling),height=int(280*guiScaling),highlightthickness=0,background=guiColor_offwhite)  
 I_logo = gensup.convertColorSpace(cv2.imread(dirPvars+'graphic_4265.png')) # load the default image
-gensup.easyTkImageDisplay(guiwindow,logo,I_logo,forceSize=[int(564*guiScaling),int(280*guiScaling)])
+gensup.easyTkImageDisplay(guiwindow,logo,I_logo,forceSize=[int(564*guiScaling),windW])
 
 # Define the settings fields
 fieldNames = ['Field Length (ft)',
@@ -568,7 +568,7 @@ for i in range(0,len(textFields),1):
     textFields[i]['field'].pack()
 buttonApply.pack(pady=10)
 buttonPlan.pack(pady=10)
-logo.pack(pady=10)
+logo.pack(pady=10,expand=True)
 
 # Run the GUI window
 if((__name__ == '__main__') and not flag_upgraded):
