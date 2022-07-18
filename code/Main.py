@@ -143,6 +143,8 @@ class Path():
             step_size = h_npz_defaults['step_size']
             try: dpiScaling = h_npz_defaults['dpiScaling']
             except: dpiScaling = 100.0 # backwards compatibility
+            try: omega_fraction = h_npz_defaults['omega_fraction']
+            except: omega_fraction = 0.3 # backwards compatibility
         except:
             field_x_real = 54.0
             field_y_real = 27.0 
@@ -151,6 +153,7 @@ class Path():
             a_max = 8.0
             step_size = 1.0
             dpiScaling = 100.0
+            omega_fraction = 0.3
         self.field_x_real = 12*field_x_real # (in) length of the field
         self.field_y_real = 12*field_y_real # (in) width of the field
         self.v_min = 12*v_min # (in/s) minimum robot velocity
@@ -159,7 +162,7 @@ class Path():
         self.step_size = step_size # (in) path step size
         self.dpiScaling = dpiScaling # Windows DPI scaling setting
         self.folder_save = '../robot paths/'
-        self.omega_fraction = 0.3 # fraction of the time of a segment to rotate at cruise velocity
+        self.omega_fraction = omega_fraction # fraction of the time of a segment to rotate at cruise velocity
         
         # Reset the path
         self.reset()
@@ -461,8 +464,9 @@ def actionApplySettings(*args):
     [field_y_real,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=0.0,vmax=100.0)
     [v_max,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=1.0,vmax=30.0)
     [a_max,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=0.5,vmax=100.0)
-    [step_size,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=1.0,vmax=100.0)
-    [dpiScaling,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=50.0)
+    [omega_fraction,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=0.1,vmax=0.9)
+    [step_size,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=1.0,vmax=100.0)
+    [dpiScaling,flags] = gensup.safeTextEntry(flags,textFields[6]['field'],'float',vmin=50.0)
     
     # Save the error-free entries in the correct units
     if(flags):
@@ -473,6 +477,7 @@ def actionApplySettings(*args):
                   field_y_real=field_y_real,
                   v_max=v_max,
                   a_max=a_max,
+                  omega_fraction=omega_fraction,
                   step_size=step_size,
                   dpiScaling=dpiScaling)
         
@@ -483,6 +488,7 @@ def actionApplySettings(*args):
         path.a_max = 12.0*a_max
         path.step_size =step_size
         path.dpiScaling = dpiScaling
+        path.omega_fraction = omega_fraction
         
 #-----------------------------------------------------------------------------
 
@@ -545,12 +551,14 @@ fieldNames = ['Field Length (ft)',
               'Field Width (ft)',
               'Maximum Robot Velocity (ft/s)',
               'Maximum Robot Acceleration (ft/s²)',
+              'Rotational Cruise Velocity Fraction',
               'Smooth Point Step Size (in)',
               'Windows DPI Scaling (%)']
 defaults = [path.field_x_real/12.0,
             path.field_y_real/12.0,
             path.v_max/12.0,
             path.a_max/12.0,
+            path.omega_fraction,
             path.step_size,
             path.dpiScaling]
 
