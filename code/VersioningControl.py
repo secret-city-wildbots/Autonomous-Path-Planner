@@ -187,6 +187,7 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v***
+> Field calibration points can now be used to aid the user in adjusting paths for competition fields.
 > Users can now click a waypoint to move it with the mouse.
 > Users can now reset file selections from the GUI.
 > The rotational cruise velocity fraction can now be configured as a setting.

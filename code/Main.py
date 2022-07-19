@@ -598,8 +598,8 @@ def actionLoadField(*args):
 # Open the GUI window
 guiwindow = tk.Tk()
 guiwindow.title(softwareName)
-windW = int(0.30*1080) # window width
-windH = int(0.70*1920) # window height 
+windW = int(300) # window width
+windH = int(850) # window height 
 guiwindow.geometry(str(windW)+'x'+str(windH))
 guiwindow.configure(background=guiColor_offwhite)
 guiwindow.resizable(width=False,height=True)
