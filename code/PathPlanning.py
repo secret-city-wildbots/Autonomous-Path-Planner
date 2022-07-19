@@ -436,7 +436,7 @@ def popupPtData(path,x_prior,y_prior,flag_newPt):
     popwindow = tk.Toplevel()
     popwindow.title('Waypoint')
     windW = 300 # window width
-    windH = 600 # window height 
+    windH = 500 # window height 
     popwindow.geometry(str(windW)+'x'+str(windH))
     popwindow.configure(background=guiColor_offwhite)
     popwindow.resizable(width=False, height=False)
@@ -466,7 +466,7 @@ def popupPtData(path,x_prior,y_prior,flag_newPt):
     # Set up the elements
     textFields = []
     for i in range(0,len(fieldNames),1):
-        spacer = tk.Label(popwindow,text='',bg=guiColor_offwhite,font=(guiFontType_normal,5),anchor='w')
+        spacer = tk.Label(popwindow,text='',bg=guiColor_offwhite,font=(guiFontType_normal,2),anchor='w')
         [title,field] = gensup.easyTextField(popwindow,windW,fieldNames[i],str(defaults[i]))
         textFields.append({'title': title, 'field': field, 'spacer': spacer})
     if(way_index==-1): buttonName = 'Create'

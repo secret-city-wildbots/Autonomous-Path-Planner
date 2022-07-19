@@ -1,4 +1,4 @@
-# Date: 2022-07-17
+# Date: 2022-07-18
 # Description: a path planner for the FIRST Robotics Competition
 #-----------------------------------------------------------------------------
 
@@ -146,6 +146,10 @@ class Path():
             except: dpiScaling = 100.0 # backwards compatibility
             try: omega_fraction = h_npz_defaults['omega_fraction']
             except: omega_fraction = 0.3 # backwards compatibility
+            try: ref_x = h_npz_defaults['ref_x']
+            except: ref_x = 0.0 # backwards compatibility
+            try: ref_y = h_npz_defaults['ref_y']
+            except: ref_y = 0.0 # backwards compatibility
         except:
             field_x_real = 54.0
             field_y_real = 27.0 
@@ -155,6 +159,8 @@ class Path():
             step_size = 1.0
             dpiScaling = 100.0
             omega_fraction = 0.3
+            ref_x = 0.0
+            ref_y = 0.0
         self.field_x_real = 12*field_x_real # (in) length of the field
         self.field_y_real = 12*field_y_real # (in) width of the field
         self.v_min = 12*v_min # (in/s) minimum robot velocity
@@ -164,6 +170,8 @@ class Path():
         self.dpiScaling = dpiScaling # Windows DPI scaling setting
         self.folder_save = '../robot paths/'
         self.omega_fraction = omega_fraction # fraction of the time of a segment to rotate at cruise velocity
+        self.ref_x = ref_x # reference x coordinate
+        self.ref_y = ref_y # reference y coordinate
         
         # Reset the path
         self.reset()
@@ -490,7 +498,9 @@ def actionApplySettings(*args):
     [a_max,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=0.5,vmax=100.0)
     [omega_fraction,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=0.1,vmax=0.9)
     [step_size,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=1.0,vmax=100.0)
-    [dpiScaling,flags] = gensup.safeTextEntry(flags,textFields[6]['field'],'float',vmin=50.0)
+    [ref_x,flags] = gensup.safeTextEntry(flags,textFields[6]['field'],'float',vmin=0.0,vmax=12.0*field_x_real)
+    [ref_y,flags] = gensup.safeTextEntry(flags,textFields[7]['field'],'float',vmin=0.0,vmax=12.0*field_y_real)
+    [dpiScaling,flags] = gensup.safeTextEntry(flags,textFields[8]['field'],'float',vmin=50.0)
     
     # Save the error-free entries in the correct units
     if(flags):
@@ -503,6 +513,8 @@ def actionApplySettings(*args):
                   a_max=a_max,
                   omega_fraction=omega_fraction,
                   step_size=step_size,
+                  ref_x=ref_x,
+                  ref_y=ref_y,
                   dpiScaling=dpiScaling)
         
         # Save in memory
@@ -513,6 +525,8 @@ def actionApplySettings(*args):
         path.step_size =step_size
         path.dpiScaling = dpiScaling
         path.omega_fraction = omega_fraction
+        path.ref_x = ref_x
+        path.ref_y = ref_y
         
 #-----------------------------------------------------------------------------
 
@@ -522,7 +536,7 @@ def actionResetFiles(*args):
     """
     
     # Confirm intention to reet the previous file selections
-    userChoice = tk.messagebox.askyesno(softwareName,'Are you sure you want to reset all previous file selections (e.g., field maps, robot models, and field calibrations)?')
+    userChoice = tk.messagebox.askyesno(softwareName,'Are you sure you want to reset all previous file selections (e.g., field maps, robot models, and field calibrations)?',icon='warning')
     
     # Delete file selections
     if(userChoice): 
@@ -594,6 +608,8 @@ fieldNames = ['Field Length (ft)',
               'Maximum Robot Acceleration (ft/s²)',
               'Rotational Cruise Velocity Fraction',
               'Smooth Point Step Size (in)',
+              'X Reference Point (in)',
+              'Y Reference Point (in)',
               'Windows DPI Scaling (%)']
 defaults = [path.field_x_real/12.0,
             path.field_y_real/12.0,
@@ -601,13 +617,15 @@ defaults = [path.field_x_real/12.0,
             path.a_max/12.0,
             path.omega_fraction,
             path.step_size,
+            path.ref_x,
+            path.ref_y,
             path.dpiScaling]
 
 # Set up the settings elements
 textFields = []
 for i in range(0,len(fieldNames),1):
     [title,field] = gensup.easyTextField(guiwindow,windW,fieldNames[i],str(defaults[i]))
-    spacer = tk.Label(guiwindow,text='',bg=guiColor_offwhite,font=(guiFontType_normal,5),anchor='w')
+    spacer = tk.Label(guiwindow,text='',bg=guiColor_offwhite,font=(guiFontType_normal,2),anchor='w')
     textFields.append({'title': title, 'field': field, 'spacer': spacer})
 buttonApply = tk.Button(guiwindow,text='Save Settings',fg=guiColor_black,bg=guiColor_hotpink,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.04*windW),command=actionApplySettings)
 buttonReset = tk.Button(guiwindow,text='Reset File Selections',fg=guiColor_black,bg=guiColor_hotyellow,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.04*windW),command=actionResetFiles)
