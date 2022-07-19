@@ -8,3 +8,5 @@
 /vars/ostype.npy
 /vars/rememberedRobot.npy
 /vars/rememberedField.npy
+/vars/rememberedRedPoints.npy
+/vars/rememberedBluePoints.npy

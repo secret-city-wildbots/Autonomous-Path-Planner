@@ -544,6 +544,10 @@ def actionResetFiles(*args):
         except: pass
         try: os.remove(dirPvars+'rememberedRobot.npy')
         except: pass
+        try: os.remove(dirPvars+'rememberedBluePoints.npy')
+        except: pass
+        try: os.remove(dirPvars+'rememberedRedPoints.npy')
+        except: pass
         
 #-----------------------------------------------------------------------------
 
@@ -568,14 +572,24 @@ def actionLoadField(*args):
         # Ask the user to load a robot model
         try: file_robot = str(np.load(dirPvars+'rememberedRobot.npy'))
         except: file_robot = filedialog.askopenfilename(initialdir='../robot models/',title = 'Select a Robot Model',filetypes=recognizedImageExtensions)
-        np.save(dirPvars+'rememberedRobot.npy',file_robot)
+        if(file_robot!=''): np.save(dirPvars+'rememberedRobot.npy',file_robot)
+        
+        # Ask the user to load calibration points for the red side of the field
+        try: file_red = str(np.load(dirPvars+'rememberedRedPoints.npy'))
+        except: file_red = filedialog.askopenfilename(title = 'Select Field Calibration Points for the Red Side',filetypes=[('CSV','*.csv ')])
+        if(file_red!=''): np.save(dirPvars+'rememberedRedPoints.npy',file_red)
+        
+        # Ask the user to load calibration points for the blue side of the field
+        try: file_blue = str(np.load(dirPvars+'rememberedBluePoints.npy'))
+        except: file_blue = filedialog.askopenfilename(title = 'Select Field Calibration Points for the Blue Side',filetypes=[('CSV','*.csv ')])
+        if(file_blue!=''): np.save(dirPvars+'rememberedBluePoints.npy',file_blue)
         
         # Ask the user to load a previous path
-        file_csv = filedialog.askopenfilename(initialdir='',title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
+        file_csv = filedialog.askopenfilename(initialdir='',title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')])
         path.loadWayPoints(file_csv)
         
         # Start the path planner
-        plan.definePath(path,file_I,file_robot,buttonPlan)
+        plan.definePath(path,file_I,file_robot,buttonPlan,file_red,file_blue)
         
     else: buttonPlan.configure(bg=guiColor_hotgreen,state=tk.NORMAL)
     
