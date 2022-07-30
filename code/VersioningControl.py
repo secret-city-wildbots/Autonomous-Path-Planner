@@ -1,4 +1,4 @@
-# Date: 2021-09-19
+# Date: 2022-07-30
 # Description: auto-generates the readme.txt file and handle software upgrades
 # and installation
 #-----------------------------------------------------------------------------
@@ -134,6 +134,7 @@ def upgrade(versionNumber_current):
         os.system('move '+resourcePath('editwaypoint.png')+' "'+'../vars'+'"')
         os.system('move '+resourcePath('savepath.png')+' "'+'../vars'+'"')
         os.system('move '+resourcePath('probe.png')+' "'+'../vars'+'"')
+        os.system('move '+resourcePath('movewaypoint.png')+' "'+'../vars'+'"')
         
         # Delete the old readme file
         try: os.remove(dirPvars+'readme.txt')
