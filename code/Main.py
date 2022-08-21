@@ -1,9 +1,9 @@
-# Date: 2022-04-09
+# Date: 2022-07-18
 # Description: a path planner for the FIRST Robotics Competition
 #-----------------------------------------------------------------------------
 
 # Versioning information
-versionNumber = '2.2.7' # breaking.major-feature-add.minor-feature-or-bug-fix
+versionNumber = '2.2.8' # breaking.major-feature-add.minor-feature-or-bug-fix
 versionType = 'stable' # options are "dev" or "stable"
 print('Loading v%s...' %(versionNumber))
 
@@ -73,18 +73,16 @@ import GeneralSupportFunctions as gensup # general support functions
 import PathPlanning as plan # pathe planner
 
 # Load persistent variables
-h_npz_settings = np.load(dirPvars+'settings.npz',allow_pickle=True)
-softwareName = str(h_npz_settings['softwareName'])
-recognizedImageExtensions = np.ndarray.tolist(h_npz_settings['recognizedImageExtensions'])
-guiColor_black = h_npz_settings['guiColor_black']
-guiColor_white = h_npz_settings['guiColor_white']
-guiColor_offwhite = h_npz_settings['guiColor_offwhite']
-guiColor_hotpink = h_npz_settings['guiColor_hotpink']
-guiColor_hotgreen = h_npz_settings['guiColor_hotgreen']
-guiFontSize_large = h_npz_settings['guiFontSize_large']
-guiFontSize_small = h_npz_settings['guiFontSize_small']
-guiFontType_normal = h_npz_settings['guiFontType_normal']
-guiFontType_uniform = h_npz_settings['guiFontType_uniform']
+from Constants import(softwareName,
+                      recognizedImageExtensions,
+                      guiColor_black,
+                      guiColor_offwhite,
+                      guiColor_hotpink,
+                      guiColor_hotgreen,
+                      guiColor_hotyellow,
+                      guiFontSize_large,
+                      guiFontSize_small,
+                      guiFontType_normal)
 
 # Load defaults
 try: h_npz_defaults = np.load(dirPvars+'defaults.npz',allow_pickle=True)
@@ -146,6 +144,12 @@ class Path():
             step_size = h_npz_defaults['step_size']
             try: dpiScaling = h_npz_defaults['dpiScaling']
             except: dpiScaling = 100.0 # backwards compatibility
+            try: omega_fraction = h_npz_defaults['omega_fraction']
+            except: omega_fraction = 0.3 # backwards compatibility
+            try: ref_x = h_npz_defaults['ref_x']
+            except: ref_x = 0.0 # backwards compatibility
+            try: ref_y = h_npz_defaults['ref_y']
+            except: ref_y = 0.0 # backwards compatibility
         except:
             field_x_real = 54.0
             field_y_real = 27.0 
@@ -154,6 +158,9 @@ class Path():
             a_max = 8.0
             step_size = 1.0
             dpiScaling = 100.0
+            omega_fraction = 0.3
+            ref_x = 0.0
+            ref_y = 0.0
         self.field_x_real = 12*field_x_real # (in) length of the field
         self.field_y_real = 12*field_y_real # (in) width of the field
         self.v_min = 12*v_min # (in/s) minimum robot velocity
@@ -162,7 +169,9 @@ class Path():
         self.step_size = step_size # (in) path step size
         self.dpiScaling = dpiScaling # Windows DPI scaling setting
         self.folder_save = '../robot paths/'
-        self.omega_fraction = 0.3 # fraction of the time of a segment to rotate at cruise velocity
+        self.omega_fraction = omega_fraction # fraction of the time of a segment to rotate at cruise velocity
+        self.ref_x = ref_x # reference x coordinate
+        self.ref_y = ref_y # reference y coordinate
         
         # Reset the path
         self.reset()
@@ -408,7 +417,30 @@ class Path():
         else: fmt_str = 'The path could not be probed.'
         
         return fmt_str
+    
+    def move(self,x_prior,y_prior,x_new,y_new):
         
+        # Convert the candidate points into inches for search
+        x_prior = x_prior/self.scale_pi # (in)
+        y_prior = (self.field_y_pixels-y_prior)/self.scale_pi # (in)
+        
+        # Find the closest point to edit
+        way_index = -1
+        d_edit = None
+        for i in range(0,len(self.ways_x),1):
+            d = np.sqrt(((self.ways_x[i]-x_prior)**2)+((self.ways_y[i]-y_prior)**2))
+            if(d_edit is not None):
+                if(d<d_edit): 
+                    d_edit = d
+                    way_index = i
+            else:
+                d_edit = d
+                way_index = i      
+           
+        # Update the waypoint position
+        self.ways_x[way_index] = x_new/self.scale_pi # (in)
+        self.ways_y[way_index] = (self.field_y_pixels-y_new)/self.scale_pi # (in)
+    
 # Instantiate the robot path
 path = Path()
     
@@ -464,8 +496,11 @@ def actionApplySettings(*args):
     [field_y_real,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=0.0,vmax=100.0)
     [v_max,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=1.0,vmax=30.0)
     [a_max,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=0.5,vmax=100.0)
-    [step_size,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=1.0,vmax=100.0)
-    [dpiScaling,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=50.0)
+    [omega_fraction,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=0.1,vmax=0.9)
+    [step_size,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=1.0,vmax=100.0)
+    [ref_x,flags] = gensup.safeTextEntry(flags,textFields[6]['field'],'float',vmin=0.0,vmax=12.0*field_x_real)
+    [ref_y,flags] = gensup.safeTextEntry(flags,textFields[7]['field'],'float',vmin=0.0,vmax=12.0*field_y_real)
+    [dpiScaling,flags] = gensup.safeTextEntry(flags,textFields[8]['field'],'float',vmin=50.0)
     
     # Save the error-free entries in the correct units
     if(flags):
@@ -476,7 +511,10 @@ def actionApplySettings(*args):
                   field_y_real=field_y_real,
                   v_max=v_max,
                   a_max=a_max,
+                  omega_fraction=omega_fraction,
                   step_size=step_size,
+                  ref_x=ref_x,
+                  ref_y=ref_y,
                   dpiScaling=dpiScaling)
         
         # Save in memory
@@ -486,6 +524,30 @@ def actionApplySettings(*args):
         path.a_max = 12.0*a_max
         path.step_size =step_size
         path.dpiScaling = dpiScaling
+        path.omega_fraction = omega_fraction
+        path.ref_x = ref_x
+        path.ref_y = ref_y
+        
+#-----------------------------------------------------------------------------
+
+def actionResetFiles(*args):
+    """
+    Reset previous file selections
+    """
+    
+    # Confirm intention to reet the previous file selections
+    userChoice = tk.messagebox.askyesno(softwareName,'Are you sure you want to reset all previous file selections (e.g., field maps, robot models, and field calibrations)?',icon='warning')
+    
+    # Delete file selections
+    if(userChoice): 
+        try: os.remove(dirPvars+'rememberedField.npy')
+        except: pass
+        try: os.remove(dirPvars+'rememberedRobot.npy')
+        except: pass
+        try: os.remove(dirPvars+'rememberedBluePoints.npy')
+        except: pass
+        try: os.remove(dirPvars+'rememberedRedPoints.npy')
+        except: pass
         
 #-----------------------------------------------------------------------------
 
@@ -510,14 +572,24 @@ def actionLoadField(*args):
         # Ask the user to load a robot model
         try: file_robot = str(np.load(dirPvars+'rememberedRobot.npy'))
         except: file_robot = filedialog.askopenfilename(initialdir='../robot models/',title = 'Select a Robot Model',filetypes=recognizedImageExtensions)
-        np.save(dirPvars+'rememberedRobot.npy',file_robot)
+        if(file_robot!=''): np.save(dirPvars+'rememberedRobot.npy',file_robot)
+        
+        # Ask the user to load calibration points for the red side of the field
+        try: file_red = str(np.load(dirPvars+'rememberedRedPoints.npy'))
+        except: file_red = filedialog.askopenfilename(title = 'Select Field Calibration Points for the Red Side',filetypes=[('CSV','*.csv ')])
+        if(file_red!=''): np.save(dirPvars+'rememberedRedPoints.npy',file_red)
+        
+        # Ask the user to load calibration points for the blue side of the field
+        try: file_blue = str(np.load(dirPvars+'rememberedBluePoints.npy'))
+        except: file_blue = filedialog.askopenfilename(title = 'Select Field Calibration Points for the Blue Side',filetypes=[('CSV','*.csv ')])
+        if(file_blue!=''): np.save(dirPvars+'rememberedBluePoints.npy',file_blue)
         
         # Ask the user to load a previous path
-        file_csv = filedialog.askopenfilename(initialdir='',title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')] )
+        file_csv = filedialog.askopenfilename(initialdir='',title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')])
         path.loadWayPoints(file_csv)
         
         # Start the path planner
-        plan.definePath(path,file_I,file_robot,buttonPlan)
+        plan.definePath(path,file_I,file_robot,buttonPlan,file_red,file_blue)
         
     else: buttonPlan.configure(bg=guiColor_hotgreen,state=tk.NORMAL)
     
@@ -526,8 +598,8 @@ def actionLoadField(*args):
 # Open the GUI window
 guiwindow = tk.Tk()
 guiwindow.title(softwareName)
-windW = int(0.28*min(1080,minScrnDim)) # window width
-windH = int(0.65*min(1080,minScrnDim)) # window height 
+windW = int(300) # window width
+windH = int(850) # window height 
 guiwindow.geometry(str(windW)+'x'+str(windH))
 guiwindow.configure(background=guiColor_offwhite)
 guiwindow.resizable(width=False,height=True)
@@ -541,37 +613,47 @@ guiwindow.protocol('WM_DELETE_WINDOW',actionQuit)
 # Set up the logos
 logo = tk.Canvas(guiwindow,width=int(564*guiScaling),height=int(280*guiScaling),highlightthickness=0,background=guiColor_offwhite)  
 I_logo = gensup.convertColorSpace(cv2.imread(dirPvars+'graphic_4265.png')) # load the default image
-gensup.easyTkImageDisplay(guiwindow,logo,I_logo,forceSize=[int(564*guiScaling),int(280*guiScaling)])
+gensup.easyTkImageDisplay(guiwindow,logo,I_logo,forceSize=[int(564*guiScaling),windW])
 
 # Define the settings fields
 fieldNames = ['Field Length (ft)',
               'Field Width (ft)',
               'Maximum Robot Velocity (ft/s)',
               'Maximum Robot Acceleration (ft/s²)',
+              'Rotational Cruise Velocity Fraction',
               'Smooth Point Step Size (in)',
+              'X Reference Point (in)',
+              'Y Reference Point (in)',
               'Windows DPI Scaling (%)']
 defaults = [path.field_x_real/12.0,
             path.field_y_real/12.0,
             path.v_max/12.0,
             path.a_max/12.0,
+            path.omega_fraction,
             path.step_size,
+            path.ref_x,
+            path.ref_y,
             path.dpiScaling]
 
 # Set up the settings elements
 textFields = []
 for i in range(0,len(fieldNames),1):
     [title,field] = gensup.easyTextField(guiwindow,windW,fieldNames[i],str(defaults[i]))
-    textFields.append({'title': title, 'field': field})
+    spacer = tk.Label(guiwindow,text='',bg=guiColor_offwhite,font=(guiFontType_normal,2),anchor='w')
+    textFields.append({'title': title, 'field': field, 'spacer': spacer})
 buttonApply = tk.Button(guiwindow,text='Save Settings',fg=guiColor_black,bg=guiColor_hotpink,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.04*windW),command=actionApplySettings)
+buttonReset = tk.Button(guiwindow,text='Reset File Selections',fg=guiColor_black,bg=guiColor_hotyellow,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.04*windW),command=actionResetFiles)
 buttonPlan = tk.Button(guiwindow,text='Plan New Path',fg=guiColor_black,bg=guiColor_hotgreen,font=(guiFontType_normal,guiFontSize_large),height=1,width=int(0.04*windW),command=actionLoadField)
 
 # Place all elements
 for i in range(0,len(textFields),1):
-    textFields[i]['title'].pack(fill='both')
-    textFields[i]['field'].pack()
-buttonApply.pack(pady=10)
-buttonPlan.pack(pady=10)
-logo.pack(pady=10)
+    textFields[i]['title'].pack(fill='x')
+    textFields[i]['field'].pack(fill='x',pady=1)
+    textFields[i]['spacer'].pack(fill='x')
+buttonApply.pack(pady=3,fill='x')
+buttonReset.pack(pady=3,fill='x')
+buttonPlan.pack(pady=3,fill='x')
+logo.pack(pady=10,expand=True)
 
 # Run the GUI window
 if((__name__ == '__main__') and not flag_upgraded):

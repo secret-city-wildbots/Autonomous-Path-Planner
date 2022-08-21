@@ -1,4 +1,4 @@
-# Date: 2021-09-19
+# Date: 2022-07-30
 # Description: auto-generates the readme.txt file and handle software upgrades
 # and installation
 #-----------------------------------------------------------------------------
@@ -134,6 +134,7 @@ def upgrade(versionNumber_current):
         os.system('move '+resourcePath('editwaypoint.png')+' "'+'../vars'+'"')
         os.system('move '+resourcePath('savepath.png')+' "'+'../vars'+'"')
         os.system('move '+resourcePath('probe.png')+' "'+'../vars'+'"')
+        os.system('move '+resourcePath('movewaypoint.png')+' "'+'../vars'+'"')
         
         # Delete the old readme file
         try: os.remove(dirPvars+'readme.txt')
@@ -185,6 +186,14 @@ created by FIRST Robotics Team 4265.
 -------------------------------------------------------------------------------------
 Release Notes
 -------------------------------------------------------------------------------------
+
+v2.2.8
+> Field calibration points can now be used to aid the user in adjusting paths for competition fields.
+> Users can now click a waypoint to move it with the mouse.
+> Users can now reset file selections from the GUI.
+> The rotational cruise velocity fraction can now be configured as a setting.
+> Tweaks the GUI layout.
+> Hardcoded constants are now handled more robustly.
 
 v2.2.7
 > Adds an acceleration phase to the rotational velocity feed-forward.
