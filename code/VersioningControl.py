@@ -187,7 +187,7 @@ created by FIRST Robotics Team 4265.
 Release Notes
 -------------------------------------------------------------------------------------
 
-v***
+v2.2.8
 > Field calibration points can now be used to aid the user in adjusting paths for competition fields.
 > Users can now click a waypoint to move it with the mouse.
 > Users can now reset file selections from the GUI.
