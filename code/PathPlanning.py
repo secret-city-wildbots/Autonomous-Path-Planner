@@ -1,4 +1,4 @@
-# Date: 2022-07-18
+# Date: 2023-01-08
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
@@ -847,7 +847,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan,file_red,file_blue):
     class ToolSavePath(ToolBase):
         description = 'Saves the path'
         default_toggled = False
-        image = dirPvars+'savepath.png'
+        image = gensup.absolutePath(dirPvars+'savepath.png')
         def trigger(self,*args):
             savePath()
     
@@ -855,7 +855,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan,file_red,file_blue):
         description = 'Adds a waypoint'
         radio_group = 'default'
         default_toggled = True
-        image = dirPvars+'addwaypoint.png'
+        image = gensup.absolutePath(dirPvars+'addwaypoint.png')
         def enable(self,*args):
             global flag_toolwaypoint
             flag_toolwaypoint = 1 # add waypoint tool is selected
@@ -867,7 +867,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan,file_red,file_blue):
         description = 'Edits a waypoint'
         radio_group = 'default'
         default_toggled = False
-        image = dirPvars+'editwaypoint.png'
+        image = gensup.absolutePath(dirPvars+'editwaypoint.png')
         def enable(self,*args):
             global flag_toolwaypoint
             flag_toolwaypoint = 2 # edit waypoint tool is selected
@@ -879,7 +879,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan,file_red,file_blue):
         description = 'Moves a waypoint'
         radio_group = 'default'
         default_toggled = False
-        image = dirPvars+'movewaypoint.png'
+        image = gensup.absolutePath(dirPvars+'movewaypoint.png')
         def enable(self,*args):
             global flag_toolwaypoint
             flag_toolwaypoint = 4 # move waypoint tool is selected
@@ -891,7 +891,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan,file_red,file_blue):
         description = 'Probe the path'
         radio_group = 'default'
         default_toggled = False
-        image = dirPvars+'probe.png'
+        image = gensup.absolutePath(dirPvars+'probe.png')
         def enable(self,*args):
             global flag_toolwaypoint
             flag_toolwaypoint = 3 # probe path tool is selected
