@@ -1,4 +1,4 @@
-# Date: 2022-07-30
+# Date: 2023-01-08
 # Description: auto-generates the readme.txt file and handle software upgrades
 # and installation
 #-----------------------------------------------------------------------------
@@ -8,7 +8,6 @@ import numpy as np # math operations
 import os # hooks into Windows operating system
 import shutil # used for copying files
 import sys # access to the OS
-from tkinter import filedialog # TkInter popup windows
 from tkinter import messagebox # TkInter popup windows
 from win32com.client import Dispatch # used for creating the desktop shortcut
 
@@ -46,14 +45,15 @@ def install(argv):
     
     if(flag_unpack):
         
-        # Ask the user to pick in installation directory
-        messagebox.showinfo('4265 Path Planner','To begin installing the 4265 Path Planner, please choose an installation location.')
-        path_install = filedialog.askdirectory(title='Select an Installation Directory')
+        # Set the installation directory
+        path_install = 'C:/Program Files (x86)/'
         
         # Create the folder structure
         print('Creating the folder structure...')
-        os.mkdir(path_install+'/FRC 4265 Path Planner')
-        os.mkdir(path_install+'/FRC 4265 Path Planner/code')
+        try: os.mkdir(path_install+'/FRC 4265 Path Planner')
+        except: pass
+        try: os.mkdir(path_install+'/FRC 4265 Path Planner/code')
+        except: pass
     
         # Copy the executable files
         print('Unpacking the executable files...')
@@ -74,7 +74,7 @@ def install(argv):
         
         # Indicate that the installation is begining 
         print('Installing the 4265 Path Planner...')
-        messagebox.showinfo('4265 Path Planner','Select "OK" to continue installing the 4265 Path Planner.')
+        messagebox.showinfo('4265 Path Planner','Select OK to continue installing the FRC 4265 Path Planner.')
         
         # Create always-local directories
         try: os.mkdir(dirPvars)
@@ -128,7 +128,6 @@ def upgrade(versionNumber_current):
         print('Finalizing upgrade from v%s to v%s...' %(versionNumber_old,versionNumber_current))
         
         # Move supporting files to the correct folders
-        os.system('move '+resourcePath('settings.npz')+' "'+'../vars'+'"')
         os.system('move '+resourcePath('graphic_4265.png')+' "'+'../vars'+'"')
         os.system('move '+resourcePath('addwaypoint.png')+' "'+'../vars'+'"')
         os.system('move '+resourcePath('editwaypoint.png')+' "'+'../vars'+'"')
@@ -151,9 +150,9 @@ def upgrade(versionNumber_current):
         np.save(dirPvars+'versionNumber',versionNumber_current)
         
         # Report out that the software was upgraded
-        notification = 'Installation of v%s of the 4265 Path Planner is complete, please review the release notes for any important changes. Select "OK" to close the installer and then you may restart the software using the shortcut.' %(versionNumber_current)
+        notification = 'Installation of v%s of the FRC 4265 Path Planner is complete, please review the release notes for any important changes. Select OK to close the installer and then you may restart the software using the shortcut.' %(versionNumber_current)
         print('\n'+notification+'\n')
-        messagebox.showwarning('4265 Path Planner',notification)
+        messagebox.showinfo('4265 Path Planner',notification)
         flag_upgraded = True
         
         # Open the release notes
@@ -187,6 +186,10 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v2.2.9
+> Allows the path planner version to be updated by just double-clicking a new executable.
+> Fixes a minor issue with how the default settings are delayed.
+> Hard-codes the installation directory to reduce chances for user error.
+> Prevents the main GUI from locking if a bad field image is selected by the user.
 > Adding field drawings and initial robot models for the 2023 Charged Up game.
 > Updating the default field dimensions for the 2023 Charged Up game.
 > Updating the packages for 2023.

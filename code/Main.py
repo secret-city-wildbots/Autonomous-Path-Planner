@@ -582,7 +582,8 @@ def actionLoadField(*args):
         path.loadWayPoints(file_csv)
         
         # Start the path planner
-        plan.definePath(path,file_I,file_robot,buttonPlan,file_red,file_blue)
+        try: plan.definePath(path,file_I,file_robot,buttonPlan,file_red,file_blue)
+        except: buttonPlan.configure(bg=guiColor_hotgreen,state=tk.NORMAL)
         
     else: buttonPlan.configure(bg=guiColor_hotgreen,state=tk.NORMAL)
     
@@ -618,10 +619,10 @@ fieldNames = ['Field Length (ft)',
               'X Reference Point (in)',
               'Y Reference Point (in)',
               'Windows DPI Scaling (%)']
-defaults = [path.field_x_real/12.0,
-            path.field_y_real/12.0,
-            path.v_max/12.0,
-            path.a_max/12.0,
+defaults = [np.round(path.field_x_real/12.0,2),
+            np.round(path.field_y_real/12.0,2),
+            np.round(path.v_max/12.0,2),
+            np.round(path.a_max/12.0,2),
             path.omega_fraction,
             path.step_size,
             path.ref_x,
