@@ -1,4 +1,4 @@
-# Date: 2022-07-17
+# Date: 2023-01-08
 # Description: general support functions
 #-----------------------------------------------------------------------------
 
@@ -86,6 +86,36 @@ def ospath(path,**kwargs):
         path = path.replace('\\','/')
     
     return path
+
+#-----------------------------------------------------------------------------
+
+def absolutePath(path_in):
+    """
+    Converts the input path into an absolute path if it is relative
+    Args:
+        path_in: input path (may be relative or absolute)
+    Returns:
+        path_out: output path (is absolute)
+    Saves:
+        None
+    """
+
+    # Convert the input path to an absolute path if necessary
+    if(path_in.find(':')==-1):
+
+        # Get the root path
+        path_root = ospath(os.getcwd(),mode='path')
+        path_out = path_in # initialize
+        while(path_out.find('..')!=-1):
+            path_root = path_root[0:path_root.rfind('/')] # remove from the right
+            path_out = path_out[path_out.find('..')+2:] # remove from the left
+
+        # Combine the shorted root and relative paths
+        path_out = path_root+path_out
+
+    else: path_out = path_in
+
+    return path_out
 
 #-----------------------------------------------------------------------------
 

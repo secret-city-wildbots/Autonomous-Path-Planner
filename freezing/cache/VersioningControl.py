@@ -185,7 +185,8 @@ The "4265 Path Planner" an autonomous path planner for the FIRST Robotics Compet
 Release Notes
 -------------------------------------------------------------------------------------
 
-v2.2.9
+v2.3.0
+> Fixes a bug with the custom toolbar icons.
 > Allows the path planner version to be updated by just double-clicking a new executable.
 > Fixes a minor issue with how the default settings are delayed.
 > Hard-codes the installation directory to reduce chances for user error.
