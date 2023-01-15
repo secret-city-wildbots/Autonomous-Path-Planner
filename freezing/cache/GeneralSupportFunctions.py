@@ -1,4 +1,4 @@
-# Date: 2023-01-08
+# Date: 2023-01-15
 # Description: general support functions
 #-----------------------------------------------------------------------------
 
@@ -9,6 +9,7 @@ from matplotlib.patches import Patch # graphics object
 import numpy as np # Numpy toolbox
 import os # access to Windows OS
 from PIL import ImageTk,Image # TkInter-integrated image display functionality 
+import shutil # used for copying files
 import tkinter as tk # TkInter UI backbone
 
 # Hardcoded directory paths
@@ -45,8 +46,8 @@ def copySelectedFile(path,moveto):
         None
     """
     
-    # Construct the required Windows command string 
-    os.system('copy "'+path.replace('\\','\\').replace('/','\\')+'" "'+moveto.replace('\\','\\').replace('/','\\')+'"')
+    try: shutil.copyfile(path.replace('/','\\'),moveto.replace('/','\\'))
+    except shutil.SameFileError as e: print(e)
     
     # Report the copied file
     print(path)
