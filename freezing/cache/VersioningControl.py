@@ -198,6 +198,10 @@ Release Notes
 -------------------------------------------------------------------------------------
 
 v2.3.1
+> Waypoints can now be flipped about the x or y axes by enditing a waypoint and placing a negative sign in front of the desired coordinate.
+> Changes the path velocity color map.
+> Robot and waypoint colors will adjust automatically based on the alliance selection.
+> The user can now specify which alliance they are planning a path for so that the field is flipped the correct direction.
 > The installer will no longer fail if the desktop shortcut can't be created.
 > Updates the file copying backend from os to shutil to fix issues with different user accounts unpacked resource files.
 

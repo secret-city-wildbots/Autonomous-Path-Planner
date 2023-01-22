@@ -408,14 +408,18 @@ def popupPtData(path,x_prior,y_prior,flag_newPt):
         # Check entries for errors
         flags = True
         [O_way,flags] = gensup.safeTextEntry(flags,textFields[0]['field'],'int',vmin=0,vmax=path.numWayPoints())
-        [x_way,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=0.0,vmax=path.field_x_real)
-        [y_way,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=0.0,vmax=path.field_y_real)
+        [x_way,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=-path.field_x_real,vmax=path.field_x_real)
+        [y_way,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=-path.field_y_real,vmax=path.field_y_real)
         [v_way,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=path.v_min/12.0,vmax=path.v_max/12.0)
         [o_way,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=0.0,vmax=360.0)
         [R_way,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=3*path.step_size)
         [T_way,flags] = gensup.safeTextEntry(flags,textFields[6]['field'],'bool')
         if(T_way): T_way = 1
         else: T_way = 0
+        
+        # Perform any requested waypoint flips ***
+        if(x_way<0): x_way += path.field_x_real
+        if(y_way<0): y_way += path.field_y_real
     
         # Save the error-free entries in the correct units
         if(flags):
@@ -622,7 +626,7 @@ def definePath(path_loaded,alliance,file_I,file_robot,buttonPlan,file_red,file_b
     I = cv2.imread(file_I,cv2.IMREAD_COLOR) # load the selected image 
     I = cv2.resize(I,(int(dispRes*path.field_x_real),int(dispRes*path.field_y_real))) # resize the image
     I = gensup.convertColorSpace(I) # fix image coloring
-    if(alliance=='blue'): I = cv2.rotate(I,cv2.ROTATE_180) # rotate the field image ***
+    if(alliance=='blue'): I = cv2.rotate(I,cv2.ROTATE_180) # rotate the field image
     
     # Calculate the scaling 
     path.fieldScale(I)

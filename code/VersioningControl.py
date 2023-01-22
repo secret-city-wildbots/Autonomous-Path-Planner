@@ -197,7 +197,8 @@ The "4265 Path Planner" an autonomous path planner for the FIRST Robotics Compet
 Release Notes
 -------------------------------------------------------------------------------------
 
-v***
+v2.3.1
+> Waypoints can now be flipped about the x or y axes by enditing a waypoint and placing a negative sign in front of the desired coordinate.
 > Changes the path velocity color map.
 > Robot and waypoint colors will adjust automatically based on the alliance selection.
 > The user can now specify which alliance they are planning a path for so that the field is flipped the correct direction.
