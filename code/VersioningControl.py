@@ -1,4 +1,4 @@
-# Date: 2023-01-08
+# Date: 2023-01-15
 # Description: auto-generates the readme.txt file and handle software upgrades
 # and installation
 #-----------------------------------------------------------------------------
@@ -26,6 +26,16 @@ def resourcePath(relative_path):
     except: base_path = os.path.abspath(".")
     
     return os.path.join(base_path,relative_path)
+
+#-----------------------------------------------------------------------------
+
+def unpackResource(filename):
+    """
+    Unpacks the specified resource file to the vars/ directory
+    """
+    
+    try: shutil.copyfile(resourcePath(filename),dirPvars+filename)
+    except: pass
 
 #-----------------------------------------------------------------------------
 
@@ -89,18 +99,20 @@ def install(argv):
         # Ask the user if they would like to create a desktop shortcut
         create_shortcut = messagebox.askyesno('4265 Path Planner','Would you like to create a desktop shortcut?')
         if(create_shortcut):
-            print('Creating a desktop shortcut...')
-            desktop = os.path.expanduser('~/Desktop')
-            path = os.path.join(desktop,'FRC 4265 Path Planner.lnk')
-            target = os.path.join(os.getcwd(),'FRC 4265 Path Planner.exe')
-            wDir = os.getcwd()
-            icon = os.path.join(os.getcwd(),'FRC 4265 Path Planner.exe')
-            shell = Dispatch('WScript.Shell')
-            shortcut = shell.CreateShortCut(path)
-            shortcut.Targetpath = target
-            shortcut.WorkingDirectory = wDir
-            shortcut.IconLocation = icon
-            shortcut.save()
+            try:
+                print('Creating a desktop shortcut...')
+                desktop = os.path.expanduser('~/Desktop')
+                path = os.path.join(desktop,'FRC 4265 Path Planner.lnk')
+                target = os.path.join(os.getcwd(),'FRC 4265 Path Planner.exe')
+                wDir = os.getcwd()
+                icon = os.path.join(os.getcwd(),'FRC 4265 Path Planner.exe')
+                shell = Dispatch('WScript.Shell')
+                shortcut = shell.CreateShortCut(path)
+                shortcut.Targetpath = target
+                shortcut.WorkingDirectory = wDir
+                shortcut.IconLocation = icon
+                shortcut.save()
+            except: print('Error: Could not create the desktop shortcut.')
             
         # Save the Operating System information
         np.save(dirPvars+'ostype.npy','Windows')
@@ -128,12 +140,12 @@ def upgrade(versionNumber_current):
         print('Finalizing upgrade from v%s to v%s...' %(versionNumber_old,versionNumber_current))
         
         # Move supporting files to the correct folders
-        os.system('move '+resourcePath('graphic_4265.png')+' "'+'../vars'+'"')
-        os.system('move '+resourcePath('addwaypoint.png')+' "'+'../vars'+'"')
-        os.system('move '+resourcePath('editwaypoint.png')+' "'+'../vars'+'"')
-        os.system('move '+resourcePath('savepath.png')+' "'+'../vars'+'"')
-        os.system('move '+resourcePath('probe.png')+' "'+'../vars'+'"')
-        os.system('move '+resourcePath('movewaypoint.png')+' "'+'../vars'+'"')
+        unpackResource('graphic_4265.png')
+        unpackResource('addwaypoint.png')
+        unpackResource('editwaypoint.png')
+        unpackResource('savepath.png')
+        unpackResource('probe.png')
+        unpackResource('movewaypoint.png')
         
         # Delete the old readme file
         try: os.remove(dirPvars+'readme.txt')
@@ -184,6 +196,14 @@ The "4265 Path Planner" an autonomous path planner for the FIRST Robotics Compet
 -------------------------------------------------------------------------------------
 Release Notes
 -------------------------------------------------------------------------------------
+
+v2.3.1
+> Waypoints can now be flipped about the x or y axes by enditing a waypoint and placing a negative sign in front of the desired coordinate.
+> Changes the path velocity color map.
+> Robot and waypoint colors will adjust automatically based on the alliance selection.
+> The user can now specify which alliance they are planning a path for so that the field is flipped the correct direction.
+> The installer will no longer fail if the desktop shortcut can't be created.
+> Updates the file copying backend from os to shutil to fix issues with different user accounts unpacked resource files.
 
 v2.3.0
 > Fixes a bug with the custom toolbar icons.

@@ -1,4 +1,4 @@
-# Date: 2023-01-08
+# Date: 2023-01-22
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
@@ -408,14 +408,18 @@ def popupPtData(path,x_prior,y_prior,flag_newPt):
         # Check entries for errors
         flags = True
         [O_way,flags] = gensup.safeTextEntry(flags,textFields[0]['field'],'int',vmin=0,vmax=path.numWayPoints())
-        [x_way,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=0.0,vmax=path.field_x_real)
-        [y_way,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=0.0,vmax=path.field_y_real)
+        [x_way,flags] = gensup.safeTextEntry(flags,textFields[1]['field'],'float',vmin=-path.field_x_real,vmax=path.field_x_real)
+        [y_way,flags] = gensup.safeTextEntry(flags,textFields[2]['field'],'float',vmin=-path.field_y_real,vmax=path.field_y_real)
         [v_way,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=path.v_min/12.0,vmax=path.v_max/12.0)
         [o_way,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=0.0,vmax=360.0)
         [R_way,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=3*path.step_size)
         [T_way,flags] = gensup.safeTextEntry(flags,textFields[6]['field'],'bool')
         if(T_way): T_way = 1
         else: T_way = 0
+        
+        # Perform any requested waypoint flips ***
+        if(x_way<0): x_way += path.field_x_real
+        if(y_way<0): y_way += path.field_y_real
     
         # Save the error-free entries in the correct units
         if(flags):
@@ -533,12 +537,13 @@ def loadRobot(file_robot,scale_pi):
 
 #-----------------------------------------------------------------------------
 
-def overlayRobot(I_in,I_robot_in,scale_pi,field_y_pixels,center_x,center_y,theta):
+def overlayRobot(I_in,I_robot_in,alliance,scale_pi,field_y_pixels,center_x,center_y,theta):
     """
     Overlays the robot model on top of the field image
     Args:
         I_in: image of the field map
         I_robot_in: image of the robot model
+        alliance: ['red','blue'] specifies the alliance
         scale_pi: (pix/in) unit conversion factor for the field
         field_y_pixels: (pix) width of the field
         center_x: (in) x coordinate of the robot center
@@ -551,6 +556,17 @@ def overlayRobot(I_in,I_robot_in,scale_pi,field_y_pixels,center_x,center_y,theta
     # Handle OpenCV ghost assignments
     I = np.copy(I_in)
     I_robot = np.copy(I_robot_in)
+    
+    # Re-color the robot based on the current alliance
+    locs_robot = ~((I_robot[:,:,0]>=225) & (I_robot[:,:,1]>=225) & (I_robot[:,:,2]>=225))
+    if(alliance=='red'):
+        I_robot[locs_robot,0] = 255
+        I_robot[locs_robot,1] = 0
+        I_robot[locs_robot,2] = 0
+    else:
+        I_robot[locs_robot,0] = 0
+        I_robot[locs_robot,1] = 0
+        I_robot[locs_robot,2] = 255
     
     # Convert the coordinates into pixels
     center_x = scale_pi*center_x
@@ -587,11 +603,12 @@ def overlayRobot(I_in,I_robot_in,scale_pi,field_y_pixels,center_x,center_y,theta
 
 #-----------------------------------------------------------------------------
 
-def definePath(path_loaded,file_I,file_robot,buttonPlan,file_red,file_blue):
+def definePath(path_loaded,alliance,file_I,file_robot,buttonPlan,file_red,file_blue):
     """
     Allows the user to define an autonomous path
     Args:
         path_loaded: loaded robot path
+        alliance: ['red','blue'] specifies the alliance
         file_I: file path to the field map image
         file_robot: file path to the robot model
         buttonPlan: handle for the path planning button
@@ -609,6 +626,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan,file_red,file_blue):
     I = cv2.imread(file_I,cv2.IMREAD_COLOR) # load the selected image 
     I = cv2.resize(I,(int(dispRes*path.field_x_real),int(dispRes*path.field_y_real))) # resize the image
     I = gensup.convertColorSpace(I) # fix image coloring
+    if(alliance=='blue'): I = cv2.rotate(I,cv2.ROTATE_180) # rotate the field image
     
     # Calculate the scaling 
     path.fieldScale(I)
@@ -788,12 +806,12 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan,file_red,file_blue):
         if(path.numWayPoints()>0):
     
             # Add the robot model at the starting waypoint
-            I_fused = overlayRobot(I,I_robot,path.scale_pi,path.field_y_pixels,path.ways_x[0],path.ways_y[0],path.ways_o[0])
+            I_fused = overlayRobot(I,I_robot,alliance,path.scale_pi,path.field_y_pixels,path.ways_x[0],path.ways_y[0],path.ways_o[0])
             
         if(path.numWayPoints()>1):
     
             # Add the robot model at the ending waypoint
-            I_fused = overlayRobot(I_fused,I_robot,path.scale_pi,path.field_y_pixels,path.ways_x[-1],path.ways_y[-1],path.ways_o[-1])
+            I_fused = overlayRobot(I_fused,I_robot,alliance,path.scale_pi,path.field_y_pixels,path.ways_x[-1],path.ways_y[-1],path.ways_o[-1])
             
         if(path.numWayPoints()>0):    
             
@@ -804,8 +822,10 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan,file_red,file_blue):
         if(path.numWayPoints()>0):
         
             # Update the way point plots
+            if(alliance=='red'): waycolor = 'r'
+            else: waycolor = 'b'
             h_ways = ax.scatter(path.scale_pi*np.array(path.ways_x),(path.field_y_pixels)*np.ones((len(path.ways_y)),float) - path.scale_pi*np.array(path.ways_y),
-                                facecolors='none',edgecolors='r',marker='o',s=400)
+                                facecolors='none',edgecolors=waycolor,marker='o',s=400)
         
         if(path.numWayPoints()>1):
             
@@ -829,7 +849,7 @@ def definePath(path_loaded,file_I,file_robot,buttonPlan,file_red,file_blue):
                 for i in range(0,path.numSmoothPoints(),1):
                     if(path.smooths_T[i]>0.5):
                         ptColor = [1,0,0] # color "must touch points red"
-                    else: ptColor = plt.cm.plasma(path.smooths_v[i]/path.v_max)
+                    else: ptColor = plt.cm.jet(path.smooths_v[i]/path.v_max)
                     ptColors.append(np.array([ptColor[0],ptColor[1],ptColor[2]]))
                 h_smooths = ax.scatter(path.scale_pi*np.array(path.smooths_x),
                                        (path.field_y_pixels)*np.ones((len(path.smooths_y)),float) - path.scale_pi*np.array(path.smooths_y),
