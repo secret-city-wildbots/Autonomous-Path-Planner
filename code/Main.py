@@ -1,4 +1,4 @@
-# Date: 2023-01-08
+# Date: 2023-01-22
 # Description: a path planner for the FIRST Robotics Competition
 #-----------------------------------------------------------------------------
 
@@ -555,6 +555,10 @@ def actionLoadField(*args):
     # Reinitialize the path
     path.reset()
     
+    # Ask the user which alliance they are planning for
+    if(tk.messagebox.askyesno(softwareName,'Are you planning a path for the RED alliance?')): alliance = 'red'
+    else: alliance = 'blue'
+    
     # Ask the user to load a field map
     try: file_I = str(np.load(dirPvars+'rememberedField.npy'))
     except: file_I = filedialog.askopenfilename(initialdir='../field drawings/',title = 'Select a Field Drawing',filetypes=recognizedImageExtensions)
@@ -568,21 +572,25 @@ def actionLoadField(*args):
         if(file_robot!=''): np.save(dirPvars+'rememberedRobot.npy',file_robot)
         
         # Ask the user to load calibration points for the red side of the field
-        try: file_red = str(np.load(dirPvars+'rememberedRedPoints.npy'))
-        except: file_red = filedialog.askopenfilename(title = 'Select Field Calibration Points for the Red Side',filetypes=[('CSV','*.csv ')])
-        if(file_red!=''): np.save(dirPvars+'rememberedRedPoints.npy',file_red)
+        if(alliance=='red'):
+            try: file_red = str(np.load(dirPvars+'rememberedRedPoints.npy'))
+            except: file_red = filedialog.askopenfilename(title = 'Select Field Calibration Points for the Red Side',filetypes=[('CSV','*.csv ')])
+            if(file_red!=''): np.save(dirPvars+'rememberedRedPoints.npy',file_red)
+        else: file_red = ''
         
         # Ask the user to load calibration points for the blue side of the field
-        try: file_blue = str(np.load(dirPvars+'rememberedBluePoints.npy'))
-        except: file_blue = filedialog.askopenfilename(title = 'Select Field Calibration Points for the Blue Side',filetypes=[('CSV','*.csv ')])
-        if(file_blue!=''): np.save(dirPvars+'rememberedBluePoints.npy',file_blue)
+        if(alliance=='blue'):
+            try: file_blue = str(np.load(dirPvars+'rememberedBluePoints.npy'))
+            except: file_blue = filedialog.askopenfilename(title = 'Select Field Calibration Points for the Blue Side',filetypes=[('CSV','*.csv ')])
+            if(file_blue!=''): np.save(dirPvars+'rememberedBluePoints.npy',file_blue)
+        else: file_blue = ''
         
         # Ask the user to load a previous path
         file_csv = filedialog.askopenfilename(initialdir='',title = 'Select a Robot Path',filetypes=[('CSV','*.csv ')])
         path.loadWayPoints(file_csv)
         
         # Start the path planner
-        try: plan.definePath(path,file_I,file_robot,buttonPlan,file_red,file_blue)
+        try: plan.definePath(path,alliance,file_I,file_robot,buttonPlan,file_red,file_blue)
         except: buttonPlan.configure(bg=guiColor_hotgreen,state=tk.NORMAL)
         
     else: buttonPlan.configure(bg=guiColor_hotgreen,state=tk.NORMAL)
