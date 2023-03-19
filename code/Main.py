@@ -1,10 +1,10 @@
-# Date: 2023-01-22
+# Date: 2023-03-19
 # Description: a path planner for the FIRST Robotics Competition
 #-----------------------------------------------------------------------------
 
 # Versioning information
 versionNumber = '2.3.2' # breaking.major-feature-add.minor-feature-or-bug-fix
-versionType = 'dev' # options are "dev" or "stable"
+versionType = 'stable' # options are "dev" or "stable"
 print('Loading v%s...' %(versionNumber))
 
 # Ignore future and depreciation warnings when not in development
@@ -139,10 +139,6 @@ class Path():
             except: dpiScaling = 100.0 # backwards compatibility
             try: omega_fraction = h_npz_defaults['omega_fraction']
             except: omega_fraction = 0.3 # backwards compatibility
-            try: ref_x = h_npz_defaults['ref_x']
-            except: ref_x = 0.0 # backwards compatibility
-            try: ref_y = h_npz_defaults['ref_y']
-            except: ref_y = 0.0 # backwards compatibility
         except:
             field_x_real = 54.3 # (ft)
             field_y_real = 26.3 # (ft)
@@ -152,8 +148,6 @@ class Path():
             step_size = 1.0 # (in)
             dpiScaling = 100.0
             omega_fraction = 0.3
-            ref_x = 0.0 # (in)
-            ref_y = 0.0 # (in)
         self.field_x_real = 12*field_x_real # (in) length of the field
         self.field_y_real = 12*field_y_real # (in) width of the field
         self.v_min = 12*v_min # (in/s) minimum robot velocity
@@ -163,8 +157,6 @@ class Path():
         self.dpiScaling = dpiScaling # Windows DPI scaling setting
         self.folder_save = '../robot paths/'
         self.omega_fraction = omega_fraction # fraction of the time of a segment to rotate at cruise velocity
-        self.ref_x = ref_x # reference x coordinate
-        self.ref_y = ref_y # reference y coordinate
         
         # Reset the path
         self.reset()
@@ -491,9 +483,7 @@ def actionApplySettings(*args):
     [a_max,flags] = gensup.safeTextEntry(flags,textFields[3]['field'],'float',vmin=0.5,vmax=100.0)
     [omega_fraction,flags] = gensup.safeTextEntry(flags,textFields[4]['field'],'float',vmin=0.1,vmax=0.9)
     [step_size,flags] = gensup.safeTextEntry(flags,textFields[5]['field'],'float',vmin=1.0,vmax=100.0)
-    [ref_x,flags] = gensup.safeTextEntry(flags,textFields[6]['field'],'float',vmin=0.0,vmax=12.0*field_x_real)
-    [ref_y,flags] = gensup.safeTextEntry(flags,textFields[7]['field'],'float',vmin=0.0,vmax=12.0*field_y_real)
-    [dpiScaling,flags] = gensup.safeTextEntry(flags,textFields[8]['field'],'float',vmin=50.0)
+    [dpiScaling,flags] = gensup.safeTextEntry(flags,textFields[6]['field'],'float',vmin=50.0)
     
     # Save the error-free entries in the correct units
     if(flags):
@@ -506,8 +496,6 @@ def actionApplySettings(*args):
                   a_max=a_max,
                   omega_fraction=omega_fraction,
                   step_size=step_size,
-                  ref_x=ref_x,
-                  ref_y=ref_y,
                   dpiScaling=dpiScaling)
         
         # Save in memory
@@ -518,8 +506,6 @@ def actionApplySettings(*args):
         path.step_size =step_size
         path.dpiScaling = dpiScaling
         path.omega_fraction = omega_fraction
-        path.ref_x = ref_x
-        path.ref_y = ref_y
         
 #-----------------------------------------------------------------------------
 
@@ -601,7 +587,7 @@ def actionLoadField(*args):
 guiwindow = tk.Tk()
 guiwindow.title(softwareName)
 windW = int(300) # window width
-windH = int(850) # window height 
+windH = int(750) # window height 
 guiwindow.geometry(str(windW)+'x'+str(windH))
 guiwindow.configure(background=guiColor_offwhite)
 guiwindow.resizable(width=False,height=True)
@@ -624,8 +610,6 @@ fieldNames = ['Field Length (ft)',
               'Maximum Robot Acceleration (ft/s²)',
               'Rotational Cruise Velocity Fraction',
               'Smooth Point Step Size (in)',
-              'X Reference Point (in)',
-              'Y Reference Point (in)',
               'Windows DPI Scaling (%)']
 defaults = [np.round(path.field_x_real/12.0,2),
             np.round(path.field_y_real/12.0,2),
@@ -633,8 +617,6 @@ defaults = [np.round(path.field_x_real/12.0,2),
             np.round(path.a_max/12.0,2),
             path.omega_fraction,
             path.step_size,
-            path.ref_x,
-            path.ref_y,
             path.dpiScaling]
 
 # Set up the settings elements

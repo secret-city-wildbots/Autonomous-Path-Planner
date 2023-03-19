@@ -197,7 +197,10 @@ The "4265 Path Planner" an autonomous path planner for the FIRST Robotics Compet
 Release Notes
 -------------------------------------------------------------------------------------
 
-v***
+v2.3.2
+> Fixes a bug in how the starting acceleration is handled.
+> Calibration points can now be measured relative to an arbitrary number of different reference points.
+> Fixes a bug introduced in v2.3.1 with the calibration points.
 
 v2.3.1
 > Waypoints can now be flipped about the x or y axes by enditing a waypoint and placing a negative sign in front of the desired coordinate.

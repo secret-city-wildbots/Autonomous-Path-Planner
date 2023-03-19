@@ -1,4 +1,4 @@
-# Date: 2023-01-22
+# Date: 2023-03-19
 # Description: path planning algorithms and user interface
 #-----------------------------------------------------------------------------
 
@@ -294,6 +294,7 @@ def pathSolution(path):
     for i in range(1,len(ptxs_smooth)-1,1):
         if(idxs_smooth[i]==idxs_smooth[i+1]): 
             vels_smooth[i] = max(12.0,vels_smooth[i])
+    vels_smooth[0] = max(vels_smooth[0],12.0) # prevent a velocity lower than 12.0 in/s on the first point
             
     # Calculate the smooth times
     t_total = 0 # total time that the robot has been traveling
@@ -647,22 +648,36 @@ def definePath(path_loaded,alliance,file_I,file_robot,buttonPlan,file_red,file_b
         df_red = pandas.read_csv(file_red)
         points_x_red = np.array(list(df_red['X (in)'].values)).astype(float)
         points_y_red = np.array(list(df_red['Y (in)'].values)).astype(float)
+        points_ref_x_red = np.array(list(df_red['Ref X (in)'].values)).astype(float)
+        points_ref_y_red = np.array(list(df_red['Ref Y (in)'].values)).astype(float)
+        
+        # Convert the field calibration points
+        points_x_red += points_ref_x_red
+        points_y_red += points_ref_y_red
+        points_x_red *= path.scale_pi
+        points_y_red = path.field_y_pixels-points_y_red*path.scale_pi
+        
+        # Render the field calibration points
+        ax.scatter(points_x_red,points_y_red,c='r',marker='+',s=400)
+    
+    except: pass
+
+    try:
+    
+        # Load the field calibration points
         df_blue = pandas.read_csv(file_blue)
         points_x_blue = np.array(list(df_blue['X (in)'].values)).astype(float)
         points_y_blue = np.array(list(df_blue['Y (in)'].values)).astype(float)
+        points_ref_x_blue = np.array(list(df_red['Ref X (in)'].values)).astype(float)
+        points_ref_y_blue = np.array(list(df_red['Ref Y (in)'].values)).astype(float)
         
         # Convert the field calibration points
-        points_x_red += path.ref_x
-        points_y_red += path.ref_y
-        points_x_blue += path.ref_x
-        points_y_blue += path.ref_y
-        points_x_red *= path.scale_pi
-        points_y_red = path.field_y_pixels-points_y_red*path.scale_pi
+        points_x_blue += points_ref_x_blue
+        points_y_blue += points_ref_y_blue
         points_x_blue *= path.scale_pi
         points_y_blue = path.field_y_pixels-points_y_blue*path.scale_pi
         
         # Render the field calibration points
-        ax.scatter(points_x_red,points_y_red,c='r',marker='+',s=400)
         ax.scatter(points_x_blue,points_y_blue,c='b',marker='+',s=400)
     
     except: pass
