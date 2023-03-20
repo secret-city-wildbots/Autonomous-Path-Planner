@@ -644,41 +644,41 @@ def definePath(path_loaded,alliance,file_I,file_robot,buttonPlan,file_red,file_b
     
     try:
     
-        # Load the field calibration points
+        # Load the red field calibration points
         df_red = pandas.read_csv(file_red)
         points_x_red = np.array(list(df_red['X (in)'].values)).astype(float)
         points_y_red = np.array(list(df_red['Y (in)'].values)).astype(float)
         points_ref_x_red = np.array(list(df_red['Ref X (in)'].values)).astype(float)
         points_ref_y_red = np.array(list(df_red['Ref Y (in)'].values)).astype(float)
         
-        # Convert the field calibration points
+        # Convert the red field calibration points
         points_x_red += points_ref_x_red
         points_y_red += points_ref_y_red
         points_x_red *= path.scale_pi
         points_y_red = path.field_y_pixels-points_y_red*path.scale_pi
         
-        # Render the field calibration points
-        ax.scatter(points_x_red,points_y_red,c='r',marker='+',s=400)
+        # Render the red field calibration points
+        ax.scatter(points_x_red,points_y_red,c='k',marker='+',s=400)
     
     except: pass
 
     try:
     
-        # Load the field calibration points
+        # Load the blue field calibration points
         df_blue = pandas.read_csv(file_blue)
         points_x_blue = np.array(list(df_blue['X (in)'].values)).astype(float)
         points_y_blue = np.array(list(df_blue['Y (in)'].values)).astype(float)
-        points_ref_x_blue = np.array(list(df_red['Ref X (in)'].values)).astype(float)
-        points_ref_y_blue = np.array(list(df_red['Ref Y (in)'].values)).astype(float)
+        points_ref_x_blue = np.array(list(df_blue['Ref X (in)'].values)).astype(float)
+        points_ref_y_blue = np.array(list(df_blue['Ref Y (in)'].values)).astype(float)
         
-        # Convert the field calibration points
+        # Convert the blue field calibration points
         points_x_blue += points_ref_x_blue
         points_y_blue += points_ref_y_blue
         points_x_blue *= path.scale_pi
         points_y_blue = path.field_y_pixels-points_y_blue*path.scale_pi
         
-        # Render the field calibration points
-        ax.scatter(points_x_blue,points_y_blue,c='b',marker='+',s=400)
+        # Render the blue field calibration points
+        ax.scatter(points_x_blue,points_y_blue,c='k',marker='+',s=400)
     
     except: pass
     
