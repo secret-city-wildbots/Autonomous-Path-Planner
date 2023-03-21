@@ -197,8 +197,8 @@ The "4265 Path Planner" an autonomous path planner for the FIRST Robotics Compet
 Release Notes
 -------------------------------------------------------------------------------------
 
-v***
-> Fixing a critical bug in the blue-side calibration points.
+v2.3.3
+> Fixing a critical bug regarding the blue-side calibration points.
 
 v2.3.2
 > Fixes a bug in how the starting acceleration is handled.
